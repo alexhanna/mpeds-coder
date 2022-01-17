@@ -41,6 +41,9 @@ from flask import Flask, request, session, g, redirect, url_for, abort, make_res
     render_template, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
 
+## jinja
+import jinja2
+
 ## article assignment library
 import assign_lib
 
@@ -72,6 +75,15 @@ def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
 # create our application
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
+
+# customize template path
+# copy-pasta from https://stackoverflow.com/questions/13598363/how-to-dynamically-select-template-directory-to-be-used-in-flask
+if 'ADDITIONAL_TEMPLATE_DIR' in app.config and app.config.get('ADDITIONAL_TEMPLATE_DIR'):
+    template_loader = jinja2.ChoiceLoader([
+        jinja2.FileSystemLoader([app.config['ADDITIONAL_TEMPLATE_DIR']]),
+        app.jinja_loader])
+    app.jinja_loader = template_loader
+
 
 ## login stuff
 lm  = LoginManager()
@@ -136,6 +148,13 @@ sv = ['comments', 'protest', 'multi', 'nous', 'ignore']
 
 ## yaml for yes/no variables
 yes_no_vars = yaml.load(open(app.config['WD'] + '/yes-no.yaml', 'r'))
+
+## yaml for states/provinces/territories
+if app.config['USE_STATES_AND_TERR']:
+    state_and_territory_vals = ordered_load(open(app.config['WD'] + '/states.yaml', 'r'))
+    #state_and_territory_vals = OrderedDict([('b', 2), ('a', 1), ('c', 3)])
+else:
+    state_and_territory_vals = dict()
 
 ## mark the single-valued items
 event_creator_single_value = app.config['SINGLE_VALUE_VARS']
@@ -2155,7 +2174,7 @@ def changeCode(pn):
     return jsonify(result={"status": 200})
 
 
-@app.route('/_mark_ec_done')
+@app.route('/_mark_ec_done', methods=['POST'])
 @login_required
 def markECDone():
     article_id = request.form['article_id']
@@ -2256,8 +2275,10 @@ def getEvents():
         elif pn =='ec':
             if len(rvar['desc']) > 0 and len(rvar['desc'][0]) > 0:
                 ev['repr'] = ", ".join(rvar['desc'])
-                ## No longer necessary with article-level description
-            elif len(rvar['article-desc']) > 0 and len(rvar['article-desc'][0]) > 0:
+            ## No longer necessary with article-level description
+            elif (len(rvar['article-desc']) > 0
+                  and len(rvar['article-desc'][0]) > 0
+                  and not app.config['ANNOTATE_ARTICLE_LEVEL']):
                 ev['repr'] = "(no event description): " + ", ".join(rvar['article-desc'])
             else:
                 ev['repr'] = "(no event description)"
@@ -2420,6 +2441,7 @@ def modifyEvents():
             v2 = v2,
             vars = event_creator_vars,
             yes_no_vars = yes_no_vars,
+            state_and_territory_vals = state_and_territory_vals,
             opts = opts, 
             curr = curr, 
             event_id = eid)
