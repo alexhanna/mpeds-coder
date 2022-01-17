@@ -89,6 +89,18 @@ var modifyEvent = function(e) {
       });
     });
 
+    $("#preset2_block :radio").each(function() {
+      $(this).change(function(e) {
+        var variable = $(e.target).attr("id").split("_")[1];
+
+        // hide everything
+        $(".options").each( function() { $(this).hide() });
+
+        // except options for currently selected variable
+        $("#options_" + variable).show();
+      });
+    });
+
     // show 'form' options upon default
     $('#varevent_form').prop("checked", true);
     $("#options_form").show(); 
@@ -115,6 +127,7 @@ var modifyEvent = function(e) {
     $('#basicinfo_block :checkbox').change(selectCheckbox);
     $('#yes-no_block :checkbox').change(selectCheckbox);
     $('#preset_block :checkbox').change(selectCheckbox);
+    $('#preset2_block :checkbox').change(selectCheckbox);
 
     // Get text select vars from DOM  
     $('.varblock').each(function() {

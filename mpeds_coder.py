@@ -132,15 +132,21 @@ elif os.path.isfile(app.config['WD'] + '/text-selects.csv'):
 preset_vars = yaml.load(open(app.config['WD'] + '/presets.yaml', 'r'))
 v1 = [(x, str.title(x).replace('-', ' ')) for x in sorted(preset_vars.keys())]
 
+## load ordered present variables
+preset2_vars = ordered_load(open(app.config['WD'] + '/presets2.yaml', 'r'))
+v4 = [(x, str.title(x).replace('-', ' ')) for x in preset2_vars.keys()]
+
 ## multiple variable keys
 multi_vars_keys = v1[:] 
 multi_vars_keys.extend(event_creator_vars[:])
+multi_vars_keys.extend(v4[:])
 multi_vars_keys = [x[0] for x in multi_vars_keys]
 
 ## pass one variables
 vars = v1[:]
 vars.extend(v2[:])
 vars.extend(v3[:])
+vars.extend(v4[:])
 
 ## single value variables for first-pass coding
 sv = ['comments', 'protest', 'multi', 'nous', 'ignore']
@@ -1741,9 +1747,16 @@ def modifyEvents():
         eid = ev.id
 
     ## built-in dropdown options
-    for preset_key in sorted(preset_vars.keys()):
-        for preset_value in preset_vars[preset_key]:
-            opts[ preset_key ].append(preset_value)
+    for key in sorted(preset_vars.keys()):
+        for val in preset_vars[key]:
+            opts[ key ].append(val)
+
+    ## unordered presets
+    ## used for university responses and police actions in 
+    ## campus protest project
+    for key in preset2_vars.keys():
+        for val in preset2_vars[key]:
+            opts[ key ].append(val)
 
     ## None of the above for v1 variables
     if pn in ['1', '2']:
@@ -1764,6 +1777,7 @@ def modifyEvents():
     return render_template(template, 
             v1 = v1, 
             v2 = v2,
+            v4 = v4,
             vars = event_creator_vars,
             yes_no_vars = yes_no_vars,
             state_and_territory_vals = state_and_territory_vals,
