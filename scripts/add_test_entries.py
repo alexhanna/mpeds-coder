@@ -1,22 +1,19 @@
 
 
 from context import config, database
-from models import CanonicalEvent, CanonicalEventLink, CodeEventCreator, RecentEvent, RecentCanonicalEvent
+from models import CanonicalEvent, CanonicalEventLink, CodeEventCreator, RecentEvent, RecentCanonicalEvent, User
 import random
 
-CODER_ID_ADJ1 = 43
-
-def add_canonical_event():
+def add_canonical_event(coder_id_adj1):
     """ Adds a canonical event and linkages to two candidate events."""
 
     ## Add event
     ce = database.db_session.query(CanonicalEvent).filter(CanonicalEvent.key == 'Milo_Chicago_2016').first()
 
     if not ce:
-        ce = CanonicalEvent(coder_id = CODER_ID_ADJ1, 
+        ce = CanonicalEvent(coder_id = coder_id_adj1, 
             key = 'Milo_Chicago_2016', 
-            notes = 'This is the main event for the protest against Milo in Chicago in 2016. This is filler text to try to break this part of it. This is filler text to try to break this part of it. This is filler text to try to break this part of it. This is filler text to try to break this part of it.', 
-            status = 'In progress')
+            description = 'This is the main event for the protest against Milo in Chicago in 2016. This is filler text to try to break this part of it. This is filler text to try to break this part of it. This is filler text to try to break this part of it. This is filler text to try to break this part of it.')
 
         ## commit this first so we can get the ID
         database.db_session.add(ce)
@@ -51,7 +48,7 @@ def add_canonical_event():
 
         ## add the new CELink
         cels.append(CanonicalEventLink(
-                coder_id     = CODER_ID_ADJ1, 
+                coder_id     = coder_id_adj1, 
                 canonical_id = ce.id,
                 cec_id       = cand_events[event_id][sv]
             ))
@@ -66,7 +63,7 @@ def add_canonical_event():
 
             for value in cand_events[event_id][variable]:
                 cels.append(CanonicalEventLink(
-                    coder_id     = CODER_ID_ADJ1,
+                    coder_id     = coder_id_adj1,
                     canonical_id = ce.id,
                     cec_id       = value
                 ))
@@ -75,23 +72,25 @@ def add_canonical_event():
     database.db_session.commit()
 
 
-def add_recent_events():
+def add_recent_events(coder_id_adj1):
     """ Add two recent candidate events. """
     database.db_session.add_all([
-        RecentEvent(CODER_ID_ADJ1, 6032),
-        RecentEvent(CODER_ID_ADJ1, 21646)
+        RecentEvent(coder_id_adj1, 6032),
+        RecentEvent(coder_id_adj1, 21646)
     ])
     database.db_session.commit()
 
 
-def add_recent_canonical_events():
+def add_recent_canonical_events(coder_id_adj1):
     """ Add example canonical event to recent canonical events. """
     ce = database.db_session.query(CanonicalEvent).filter(CanonicalEvent.key == 'Milo_Chicago_2016').first()    
 
-    database.db_session.add(RecentCanonicalEvent(CODER_ID_ADJ1, ce.id))
+    database.db_session.add(RecentCanonicalEvent(coder_id_adj1, ce.id))
     database.db_session.commit()
 
+def main():
+    coder_id_adj1 = database.db_session.query(User).filter(User.username == 'adj1').first().id
+    add_canonical_event(coder_id_adj1)
+
 if __name__ == "__main__":
-    #add_recent_events()
-    #add_recent_canonical_events()
-    pass
+    main()
