@@ -2421,14 +2421,14 @@ def modifyEvents():
 
         eid = ev.id
 
-    ## built-in dropdown options
+    ## unordered presets options
+    ## sorted alphabetically
     for key in sorted(preset_vars.keys()):
         for val in preset_vars[key]:
             opts[ key ].append(val)
 
-    ## unordered presets
-    ## used for university responses and police actions in 
-    ## campus protest project
+    ## ordered presets -- uses the sorting in the YAML file
+    ## used for university responses and police actions in campus protest project
     for key in preset2_vars.keys():
         for val in preset2_vars[key]:
             opts[ key ].append(val)
@@ -2444,10 +2444,10 @@ def modifyEvents():
             for o in db_session.query(CodeSecondPass).filter_by(variable = k, article_id = aid, coder_id = current_user.id).all():
                 opts[ o.variable ].append(o.value)
 
-    ## filter out repeated items and sort
-    for k,v in opts.items():
-        opts[k] = list( set( map(lambda x: x.strip(" .,"), opts[k]) ) )
-        opts[k].sort()
+        ## filter out repeated items and sort
+        for k in opts.keys():
+            opts[k] = list( set( map(lambda x: x.strip(" .,"), opts[k]) ) )
+            opts[k].sort()
 
     return render_template(template, 
             v1 = v1, 
