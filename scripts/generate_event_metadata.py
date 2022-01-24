@@ -17,7 +17,7 @@ mysql_engine = sqlalchemy.create_engine(
         config.MYSQL_PASS, 
         config.MYSQL_DB, 
         config.MYSQL_SOCK, 
-        'utf8mb4'), convert_unicode=True)
+        'utf8mb4'))
 
 ## skip these users
 skip_users = ['test1', 'admin', 'tina', 'alex', 'ellen', 'ishita', 
@@ -43,7 +43,9 @@ query = """SELECT
     am.pub_date, 
     am.publication, 
     am.title,
-    cec2.form AS form
+    cec_form.form AS form,
+    cec_issue.issue AS issue,
+    cec_racial_issue.racial_issue as racial_issue
 FROM coder_event_creator cec
 LEFT JOIN article_metadata am ON (cec.article_id = am.id)  
 LEFT JOIN user u ON (cec.coder_id = u.id)
@@ -52,7 +54,19 @@ LEFT JOIN (SELECT
             FROM coder_event_creator 
             WHERE variable = 'form'
             GROUP BY 1
-        ) cec2 ON (cec.event_id = cec2.event_id)
+        ) cec_form ON (cec.event_id = cec_form.event_id)
+LEFT JOIN (SELECT 
+            event_id, GROUP_CONCAT(value SEPARATOR ';') AS issue
+            FROM coder_event_creator 
+            WHERE variable = 'issue'
+            GROUP BY 1
+        ) cec_issue ON (cec.event_id = cec_issue.event_id)
+LEFT JOIN (SELECT 
+            event_id, GROUP_CONCAT(value SEPARATOR ';') AS racial_issue
+            FROM coder_event_creator 
+            WHERE variable = 'racial-issue'
+            GROUP BY 1
+        ) cec_racial_issue ON (cec.event_id = cec_racial_issue.event_id)        
 """
 
 ## get the query
@@ -73,7 +87,7 @@ df_long['value'] = df_long.apply(lambda x: x['text'] if x['text'] is not None el
 
 ## pivot
 columns = ['article-desc', 'desc', 'location', 'start-date'] 
-indexes = ['event_id', 'coder_id', 'article_id', 'publication', 'pub_date', 'title', 'form']
+indexes = ['event_id', 'coder_id', 'article_id', 'publication', 'pub_date', 'title', 'form', 'issue', 'racial_issue']
 df_wide = df_long[df_long['variable'].isin(columns)].\
     pivot(index = indexes, columns = 'variable', values = 'value')
 
@@ -114,5 +128,7 @@ df_wide.to_sql(name = 'event_metadata',
                 'publication': sqlalchemy.types.Text(),
                 'pub_date': sqlalchemy.types.Date(),
                 'title': sqlalchemy.types.Text(),
-                'form': sqlalchemy.types.Text()
+                'form': sqlalchemy.types.Text(),
+                'issue': sqlalchemy.types.Text(),
+                'racial_issue': sqlalchemy.types.Text()
             })

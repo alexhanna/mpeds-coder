@@ -13,7 +13,6 @@
                 <b>st_d:</b> {{ e.start_date }}</br>
                 <b>loc:</b> {{ e.location | safe }}<br/>
                 <b>ttl:</b> {{ e.title[0:30] }}{{ '...' if e.title > 30 else '' }} <br/>
-                <b>form:</b> {{ e.form | safe }}<br />
             </div>
             <div class="col-sm-3">
                 <b>eid:</b> {{ e.event_id }}<br/>
@@ -44,6 +43,13 @@
                     {% endfor %}
                 </p>
                 {% endif %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <b>form:</b> {{ e.form | safe }}<br />
+                <b>issue:</b> {{ e.issue | safe }}<br />
+                <b>rissue:</b> {{ e.racial_issue | safe }}<br />
             </div>
         </div>
         <div class="row">

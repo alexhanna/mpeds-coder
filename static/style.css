@@ -506,3 +506,8 @@ p.event-groupers a {
 	margin-right: 4px;
 	border: 1px solid #AAA;
 }
+
+div.event-desc div.row {
+	padding: 2px 0;
+	border-bottom: 1px solid #DDD;
+}

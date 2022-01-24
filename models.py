@@ -129,11 +129,14 @@ class EventMetadata(Base):
     pub_date     = Column(Date)
     title        = Column(Text)
     form         = Column(Text)
+    issue        = Column(Text)
+    racial_issue = Column(Text)
 
     UniqueConstraint('event_id', name = 'unique1')
 
     def __init__(self, coder_id, event_id, article_id, article_desc, desc, 
-        location, start_date, publication, pub_date, title, form):
+        location, start_date, publication, pub_date, title, 
+        form, issue, racial_issue):
         self.coder_id     = coder_id
         self.event_id     = event_id
         self.article_id   = article_id
@@ -145,6 +148,8 @@ class EventMetadata(Base):
         self.pub_date     = pub_date
         self.title        = title
         self.form         = form
+        self.issue        = issue
+        self.racial_issue = racial_issue
         
     def __repr__(self):
         return '<EventMetadata %r>' % (self.event_id)

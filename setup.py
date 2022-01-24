@@ -100,10 +100,6 @@ def addQueueExample():
 
 def main():
 	init_db()
-	addArticles(config.DOC_ROOT + config.DOC_FILE, config.DOC_DBNAME)
-	# addUsersExample()
-	# addQueueExample()
-	pass
 
 if __name__ == '__main__':
 	main()
