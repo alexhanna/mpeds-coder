@@ -125,8 +125,12 @@ elif os.path.isfile(app.config['WD'] + '/text-selects.csv'):
 ## load adj grid order
 adj_grid_order = []
 if os.path.isfile(app.config['WD'] + '/adj-grid-order.yaml'):
-    adj_grid_order = yaml.load(open(app.config['WD'] + '/adj-grid-order.yaml', 'r'), 
+    adj_load = yaml.load(open(app.config['WD'] + '/adj-grid-order.yaml', 'r'), 
         Loader = yaml.Loader)
+
+    for x in adj_load:
+        k,v = list(x.items())[0]
+        adj_grid_order.append( (k,v) )
 
 ## load preset variables
 preset_vars = yaml.load(open(app.config['WD'] + '/presets.yaml', 'r'))
@@ -615,13 +619,13 @@ def adj():
     filter_fields.append('flag')
 
     return render_template("adj.html", 
-        search_events = [],
-        filter_fields = filter_fields,
-        cand_events   = {},
-        grid_vars     = adj_grid_order,
-        links         = [],
-        flags         = [],
-        recent_events = recent_events,
+        search_events  = [],
+        filter_fields  = filter_fields,
+        cand_events    = {},
+        adj_grid_order = adj_grid_order,
+        links          = [],
+        flags          = [],
+        recent_events  = recent_events,
         recent_canonical_events = recent_canonical_events,
         canonical_event = None)
 
@@ -650,7 +654,7 @@ def load_adj_grid():
         cand_events = cand_events,
         links = links,
         flags = event_flags, 
-        grid_vars = adj_grid_order)
+        adj_grid_order = adj_grid_order)
 
 #####
 ## Search functions

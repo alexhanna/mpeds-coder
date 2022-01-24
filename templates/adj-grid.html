@@ -89,16 +89,16 @@
     </div>
 </div>
 <div class="expanded-event-view">
-    {% for var in grid_vars %} 
+    {% for var, display in adj_grid_order %} 
     <div class="row expanded-event-variable-group">
-        <div class="col-sm-1 expanded-event-variable-name" data-var="{{ var }}">{{ var }}<br/>
+        <div class="col-sm-1 expanded-event-variable-name" data-var="{{ var }}">{{ display }}<br/>
             {% if var in var_adds %}
                 <a class="glyphicon glyphicon-plus add-dummy" title="Add new value for this field" href="#"></a>
             {% elif var in ['article-desc', 'desc'] %}
-                <a href="#" id="collapse-{{ var }}" title="Minimize {{ var }}">
+                <a href="#" id="collapse-{{ var }}" title="Minimize {{ display }}">
                     <span class="glyphicon glyphicon-resize-small"></span>
                 </a>
-                <a href="#" id="expand-{{ var }}" title="Expand {{ var }}" style="display:none;">
+                <a href="#" id="expand-{{ var }}" title="Expand {{ display }}" style="display:none;">
                     <span class="glyphicon glyphicon-resize-full"></span>
                 </a>
             {% endif %}
