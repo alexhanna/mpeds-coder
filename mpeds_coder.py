@@ -48,8 +48,7 @@ import jinja2
 import assign_lib
 
 ## db
-from sqlalchemy import func, desc, distinct, and_, or_, text
-from sqlalchemy.sql import select
+from sqlalchemy import func, desc, distinct, and_, or_
 
 ## app-specific
 from database import db_session
@@ -712,7 +711,6 @@ def do_search():
             sorts.append(_sort)
 
     ## AND all the filters together
-    sort_expr = and_(*sorts)
     filter_expr = and_(*filters)
 
     search_expr = None
@@ -759,9 +757,7 @@ def do_search():
     search_events = db_session.query(EventMetadata).\
         join(EventFlag, EventMetadata.event_id == EventFlag.event_id, isouter = True).\
         filter(a_filter_expr).\
-        order_by(sort_expr).all()
-
-    ## print(a_filter_expr)
+        order_by(*sorts).all()
 
     if len(search_events) > 1000:
         return make_response("Too many results. Please refine your search.", 400)
