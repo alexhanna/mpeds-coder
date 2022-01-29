@@ -32,12 +32,14 @@
             <span class="icon-bar"></span>
           </button>
           <a href="{{ url_for('index') }}" class="navbar-brand">
+          {%- set title_class = '' %}
           {% if 'Dev' in config['SITE_TITLE'] %}
-            <p class="text-danger">{{ config['SITE_TITLE'] }}</p>
-          {% else %}
-            {{ config['SITE_TITLE'] }}
+            {%- set title_class = 'text-danger' %}
+          {% elif 'Staging' in config['SITE_TITLE'] %}
+            {%- set title_class = 'text-warning' %}
           {% endif %}
-          </a>
+          <p class="{{ title_class }}">{{ config['SITE_TITLE'] }}</p>
+        </a>
 	</div>
 	<nav class="collapse navbar-collapse bs-navbar-collapse">
           <ul class="nav navbar-nav navbar-left">
