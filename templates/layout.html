@@ -31,7 +31,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a href="{{ url_for('index') }}" class="navbar-brand">{{ config['SITE_TITLE'] }}</a>
+          <a href="{{ url_for('index') }}" class="navbar-brand">
+          {% if 'Dev' in config['SITE_TITLE'] %}
+            <p class="text-danger">{{ config['SITE_TITLE'] }}</p>
+          {% else %}
+            {{ config['SITE_TITLE'] }}
+          {% endif %}
+          </a>
 	</div>
 	<nav class="collapse navbar-collapse bs-navbar-collapse">
           <ul class="nav navbar-nav navbar-left">
