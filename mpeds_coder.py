@@ -685,6 +685,11 @@ def do_search():
                 _filter = getattr(getattr(_model, filter_field), '__eq__')(filter_value)
             elif filter_compare == 'ne':
                 _filter = getattr(getattr(_model, filter_field), '__ne__')(filter_value)
+
+                ## in the case where we're excluding a flag, need to OR "flag IS NULL"
+                if filter_field == 'flag':
+                    _filter2 = getattr(getattr(_model, filter_field), '__eq__')(None)
+                    _filter = or_(_filter, _filter2)
             elif filter_compare == 'lt':
                 _filter = getattr(getattr(_model, filter_field), '__lt__')(filter_value)
             elif filter_compare == 'le':
@@ -701,7 +706,7 @@ def do_search():
                 _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}'.format(filter_value))
             else:
                 raise Exception('Invalid filter compare: {}'.format(filter_compare))
- 
+                
             filters.append(_filter)
 
         sort_field = request.form['adj_sort_field_{}'.format(i)]
