@@ -706,7 +706,7 @@ def do_search():
                 _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}'.format(filter_value))
             else:
                 raise Exception('Invalid filter compare: {}'.format(filter_compare))
-                
+
             filters.append(_filter)
 
         sort_field = request.form['adj_sort_field_{}'.format(i)]
@@ -942,14 +942,14 @@ def add_event_flag():
 @login_required
 def del_canonical_event():
     """ Deletes the canonical event and related CEC links from the database."""
-    id = int(request.form['id'])
+    key = request.form['key']
 
-    cels = db_session.query(CanonicalEventLink)\
-        .filter(CanonicalEventLink.canonical_id == id).all()
-    rces = db_session.query(RecentCanonicalEvent)\
-        .filter(RecentCanonicalEvent.canonical_id == id).all()
     ce = db_session.query(CanonicalEvent)\
-        .filter(CanonicalEvent.id == id).first()
+        .filter(CanonicalEvent.key == key).first()
+    cels = db_session.query(CanonicalEventLink)\
+        .filter(CanonicalEventLink.canonical_id == ce.id).all()
+    rces = db_session.query(RecentCanonicalEvent)\
+        .filter(RecentCanonicalEvent.canonical_id == ce.id).all()
 
     ## remove these first to avoid FK error
     for cel in cels:
@@ -1096,6 +1096,7 @@ def modal_view():
     """Returns the template for the modal, based on the variable."""
     article_ids = []
     variable = request.form['variable']
+    edit = True if request.form.get('edit') == 'true' else False
 
     ## get the canonical event to get the ID later
     ce = None
@@ -1118,7 +1119,7 @@ def modal_view():
             article_ids = article_ids,
             preset_vars = preset_vars)
     else:
-        return render_template('modal.html', variable = variable, ce = ce)
+        return render_template('modal.html', variable = variable, ce = ce, edit = edit)
             
 
 #####

@@ -528,7 +528,6 @@ var initializeGridListeners = function() {
         e.preventDefault(); 
         updateModal(variable, 'add');
       });
-
     })
     .fail(function() { return makeError("Could not load modal."); })
   });
@@ -551,7 +550,8 @@ var initializeGridListeners = function() {
       url: $SCRIPT_ROOT + '/modal_view',
       data: {
         variable: 'canonical',
-        key: canonical_event_key
+        key: canonical_event_key,
+        edit: true
       }
     })
     .done(function() {
@@ -561,7 +561,31 @@ var initializeGridListeners = function() {
       $('#modal-submit').click(function(e) { 
         e.preventDefault(); 
         updateModal('canonical', 'edit'); 
-      });      
+      });
+
+      // Delete canonical event 
+      $('#modal-delete').click(function () {
+        var r = confirm("Are you sure you want to delete the current canonical event?")
+        if (r == false) {
+          return;
+        }
+
+        // remove from the database via Ajax call
+        var req = $.ajax({
+          url: $SCRIPT_ROOT + '/del_canonical_event',
+          type: "POST",
+          data: {
+            key: canonical_event_key
+          }
+        })
+        .done(function() {
+          $('#modal-container').modal('hide');
+
+          loadGrid('', getCandidates());
+          return makeSuccess(req.responseText);
+        })
+        .fail(function() { return makeError(req.responseText); });
+      });
     })
     .fail(function() { return makeError("Could not load modal."); })
   });
@@ -637,30 +661,6 @@ var initializeGridListeners = function() {
 
   // Remove flag
   $('.remove-flag').click(function(e) { toggleFlag(e, 'del', 'for-review') });
-
-  // Delete canonical event 
-  $('div.canonical-event-metadata a.glyphicon-trash').click(function () {
-    var r = confirm("Are you sure you want to delete the current canonical event?")
-    if (r == false) {
-      return;
-    }
-
-    var canonical_event_id = $('div.canonical-event-metadata').attr('id').split('_')[1];
-
-    // remove from the database via Ajax call
-    var req = $.ajax({
-      url: $SCRIPT_ROOT + '/del_canonical_event',
-      type: "POST",
-      data: {
-        id: canonical_event_id
-      }
-    })
-    .done(function() {
-      loadGrid('', getCandidates());
-      return makeSuccess(req.responseText);
-    })
-    .fail(function() { return makeError(req.responseText); });
-  });
 
   // Remove canonical event from grid
   $('div.canonical-event-metadata a.glyphicon-remove-sign').click(function () {
