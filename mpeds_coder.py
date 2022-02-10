@@ -38,7 +38,7 @@ from pytz import timezone
 
 ## flask
 from flask import Flask, request, session, g, redirect, url_for, abort, make_response,\
-    render_template, flash, jsonify
+    render_template, send_file, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
 
 ## jinja
@@ -53,7 +53,7 @@ from sqlalchemy import func, desc, distinct, and_, or_
 ## app-specific
 from database import db_session
 
-from models import ArticleMetadata, ArticleQueue, CanonicalEvent, CanonicalEventLink, \
+from models import ArticleMetadata, ArticleQueue, CanonicalEvent, CanonicalEventLink, CanonicalEventRelationship, \
     CoderArticleAnnotation, CodeFirstPass, CodeSecondPass, CodeEventCreator, \
     Event, EventCreatorQueue, EventFlag, EventMetadata, \
     RecentEvent, RecentCanonicalEvent, SecondPassQueue, User
@@ -1034,6 +1034,48 @@ def del_event_flag():
     db_session.commit()
 
     return make_response("Flag deleted.", 200)
+
+
+@app.route('/download_canonical/<key>', methods = ['GET', 'POST'])
+@login_required
+def download_canonical(key):
+    """ Downloads a canonical event data based on key. Serves it as a CSV. """
+    ce = db_session.query(CanonicalEvent).filter(CanonicalEvent.key == key).first()
+    data = {}
+    if not ce:
+        return make_response("No such canonical event.", 500)
+
+    cecs = db_session.query(CodeEventCreator).\
+        join(CanonicalEventLink, CodeEventCreator.id == CanonicalEventLink.cec_id).\
+        filter(CanonicalEventLink.canonical_id == ce.id).all()
+
+    ## get all canonical metadata
+    data['key'] = ce.key
+    data['coder'] = db_session.query(User).filter(User.id == ce.coder_id).first().username
+    data['description'] = ce.description
+    data['notes'] = ce.notes
+
+    ## load all the CEC data from the database
+    for cec in cecs:
+        if cec.variable not in data:
+            data[cec.variable] = []
+        data[cec.variable].append(cec.text if cec.text else cec.value)
+
+    ## collapse lists
+    for k in data.keys():
+        if type(data[k]) == list:
+            data[k] = ';'.join(data[k])
+
+    path = '{}/exports/{}_{}.csv'.\
+        format(app.config['WD'],
+        ce.key,
+        dt.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+
+    ## let pandas do all the heavy lifting for CSV formatting
+    df = pd.DataFrame(data, columns = data.keys(), index = [0])
+    df.to_csv(path, encoding = 'utf-8')
+
+    return send_file(path, as_attachment = True)
 
 
 @app.route('/modal_edit/<variable>/<mode>', methods = ['POST'])
