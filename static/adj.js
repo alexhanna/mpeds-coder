@@ -103,32 +103,37 @@ var loadGrid = function(canonical_event_key = null, cand_events_str = null) {
   return true;
 }
 
-
 /**
- * Removes the block from the canonical record.
+ * Loads the recent candidate events from the database.
  * @returns true if successful, false otherwise.
  */
-var removeCanonical = function () {
-  var target = $(this).closest('.expanded-event-variable');
-  var cel_id = target.attr('data-key');
-  var variable = target.attr('data-var');
-  var block_id = '#canonical-' + variable + '_' + cel_id;
-
+var loadRecentCandidateEvents = function() {
   var req = $.ajax({
-    type: 'POST',
-    url: $SCRIPT_ROOT + '/del_canonical_record',
-    data: {
-      cel_id: cel_id
-    }
+    url: $SCRIPT_ROOT + '/load_recent_candidate_events',
+    type: 'POST'
   })
   .done(function() {
-    // remove block
-    $(block_id).remove();
+    $('#cand-recent_block').html(req.responseText);
     return true;
   })
   .fail(function() { return makeError(req.responseText); });
 }
 
+/**
+ * Loads the recent canonical events from the database.
+ * @returns true if successful, false otherwise.
+ */
+ var loadRecentCanonicalEvents = function() {
+  var req = $.ajax({
+    url: $SCRIPT_ROOT + '/load_recent_canonical_events',
+    type: 'POST'
+  })
+  .done(function() {
+    $('#canonical-recent_block').html(req.responseText);
+    return true;
+  })
+  .fail(function() { return makeError(req.responseText); });
+}
 
 /**
  * Loads the search results for the given query from the existing forms.
@@ -174,6 +179,32 @@ var removeCanonical = function () {
     // get rid of loading flash 
     $('.flash').hide();
     $('.flash').removeClass('alert-info');
+    return true;
+  })
+  .fail(function() { return makeError(req.responseText); });
+}
+
+
+/**
+ * Removes the block from the canonical record.
+ * @returns true if successful, false otherwise.
+ */
+ var removeCanonical = function () {
+  var target = $(this).closest('.expanded-event-variable');
+  var cel_id = target.attr('data-key');
+  var variable = target.attr('data-var');
+  var block_id = '#canonical-' + variable + '_' + cel_id;
+
+  var req = $.ajax({
+    type: 'POST',
+    url: $SCRIPT_ROOT + '/del_canonical_record',
+    data: {
+      cel_id: cel_id
+    }
+  })
+  .done(function() {
+    // remove block
+    $(block_id).remove();
     return true;
   })
   .fail(function() { return makeError(req.responseText); });
@@ -388,6 +419,7 @@ var initializeSearchListeners = function() {
 
     if (success) {
       markGridEvents(cand_events);
+      loadRecentCandidateEvents();
     }
 
     return true;
@@ -415,6 +447,7 @@ var initializeCanonicalSearchListeners = function() {
 
     if (success) {
       markCanonicalGridEvent(event_desc);
+      loadRecentCanonicalEvents();
     }
   });
 }
@@ -822,4 +855,6 @@ $(function () {
       search_params.get('canonical_event_key'),      
       search_params.get('cand_events')
     );
+    loadRecentCandidateEvents();
+    loadRecentCanonicalEvents();    
 });

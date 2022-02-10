@@ -91,10 +91,7 @@
                     {% set events = search_events %}
                     {% include 'adj-search-block.html' %}
                 </div>
-                <div class="cand-subtab-pane" id="cand-recent_block" style="display:none;">
-                    {% set events = recent_events %}
-                    {% include 'adj-search-block.html' %}
-                </div>
+                <div class="cand-subtab-pane" id="cand-recent_block" style="display:none;"></div>
             </div>
             <div class="tab-pane" id="canonical_block">
                 <ul class="nav nav-pills nav-justified">
@@ -122,10 +119,7 @@
                     {% set events = [] %}
                     {% include 'adj-canonical-search-block.html' %}
                 </div>
-                <div class="canonical-subtab-pane" id="canonical-recent_block" style="display:none;">
-                    {% set events = recent_canonical_events %}
-                    {% include 'adj-canonical-search-block.html' %}
-                </div>
+                <div class="canonical-subtab-pane" id="canonical-recent_block" style="display:none;"></div>
             </div>
             <div class="tab-pane" id="relationships_block">
                 <h5>Add relationship</h5> 

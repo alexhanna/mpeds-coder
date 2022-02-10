@@ -602,17 +602,6 @@ def adj():
     if current_user.authlevel < 2: 
         return redirect(url_for('index'))
 
-    ## Get most recent candidate events.
-    recent_events = [x[0] for x in db_session.query(EventMetadata, RecentEvent).\
-        join(EventMetadata, EventMetadata.event_id == RecentEvent.event_id).\
-        order_by(desc(RecentEvent.last_accessed)).limit(5).all()]
-
-    ## Get most recent canonical events.
-    ## TODO: Add in user by name.
-    recent_canonical_events = db_session.query(CanonicalEvent).\
-        join(RecentCanonicalEvent, CanonicalEvent.id == RecentCanonicalEvent.canonical_id).\
-        order_by(desc(RecentCanonicalEvent.last_accessed)).limit(5).all()
-
     ## TODO: Base this off EventMetadata for now. Eventually, we want to get rid of this.
     filter_fields = EventMetadata.__table__.columns.keys()
     filter_fields.remove('id')
@@ -625,8 +614,8 @@ def adj():
         adj_grid_order = adj_grid_order,
         links          = [],
         flags          = [],
-        recent_events  = recent_events,
-        recent_canonical_events = recent_canonical_events,
+        recent_events  = [],
+        recent_canonical_events = [],
         canonical_event = None)
 
 
@@ -643,7 +632,11 @@ def load_adj_grid():
         canonical_event_key = None
 
     cand_event_ids = [int(x) for x in ce_ids.split(',')] if ce_ids else []
-    
+
+    ## store recent events
+    _store_recent_events(cand_event_ids, canonical_event_key)
+
+    ## do loading for the grid    
     cand_events = _load_candidate_events(cand_event_ids)
     canonical_event = _load_canonical_event(key = canonical_event_key)
     links = _load_links(canonical_event_key)
@@ -655,6 +648,30 @@ def load_adj_grid():
         links = links,
         flags = event_flags, 
         adj_grid_order = adj_grid_order)
+
+
+@app.route('/load_recent_candidate_events', methods = ['POST'])
+@login_required
+def load_recent_candidate_events():
+    """ Load and render most recent candidate events. """
+    events = [x[0] for x in db_session.query(EventMetadata, RecentEvent).\
+        join(EventMetadata, EventMetadata.event_id == RecentEvent.event_id).\
+        filter(RecentEvent.coder_id == current_user.id).\
+        order_by(desc(RecentEvent.last_accessed)).limit(5).all()]
+
+    return render_template('adj-search-block.html', events = events, flags = [])
+
+
+@app.route('/load_recent_canonical_events', methods = ['POST'])
+@login_required
+def load_recent_canonical_events():
+    """ Load and render most recent canonical events. """
+    events = db_session.query(CanonicalEvent).\
+        join(RecentCanonicalEvent, CanonicalEvent.id == RecentCanonicalEvent.canonical_id).\
+        filter(RecentCanonicalEvent.coder_id == current_user.id).\
+        order_by(desc(RecentCanonicalEvent.last_accessed)).limit(5).all()
+
+    return render_template('adj-canonical-search-block.html', events = events, flags = [])
 
 #####
 ## Search functions
@@ -1315,6 +1332,57 @@ def _load_links(canonical_event_key):
         
     return links
 
+
+@app.route('/_store_recent_events')
+@login_required
+def _store_recent_events(cand_event_ids, canonical_event_key):
+    """ Stores the recent events. Occurs with the grid reload. """
+
+    if cand_event_ids:
+        for ce_id in cand_event_ids:
+            ## load the event for this user
+            event = db_session.query(RecentEvent).\
+                filter(
+                    RecentEvent.id == ce_id, 
+                    RecentEvent.coder_id == current_user.id
+                ).first()
+
+            ## update if it exists
+            if event:
+                event.last_accessed = dt.datetime.now()
+                db_session.add(event)
+                db_session.commit()
+            else:
+                event = RecentEvent(current_user.id, ce_id)
+                db_session.add(event)
+                db_session.commit()
+    
+    if canonical_event_key:
+        ## load the canonical event for this user
+        canonical_id = db_session.query(CanonicalEvent).\
+            filter(CanonicalEvent.key == canonical_event_key).first().id
+
+        event = db_session.query(RecentCanonicalEvent).\
+            filter(
+                RecentCanonicalEvent.id == canonical_id, 
+                RecentCanonicalEvent.coder_id == current_user.id
+            ).first()
+
+        ## update if it exists
+        if event:
+            event.last_accessed = dt.datetime.now()
+            db_session.add(event)
+            db_session.commit()
+        else:
+            event = RecentCanonicalEvent(current_user.id, canonical_id)
+            db_session.add(event)
+            db_session.commit()
+
+    return None
+
+#####
+##### Pagination helpers
+#####
 
 class Pagination(object):
     """
