@@ -25,7 +25,7 @@ skip_users = ['test1', 'admin', 'tina', 'alex', 'ellen', 'ishita',
 
 ## get the disqualifying information rows
 disqualifying_variables = yaml.load(
-            open(os.path.join(os.path.abspath('..'), 'yes-no.yaml'), 'r'), 
+            open('../yes-no.yaml', 'r'), 
             Loader = yaml.BaseLoader)
 disqualifying_variables = [x[0] for x in disqualifying_variables['Disqualifying information']]
 
