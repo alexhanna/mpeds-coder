@@ -46,3 +46,5 @@ config.py
 **/*.log
 
 setup.py
+
+.vscode
