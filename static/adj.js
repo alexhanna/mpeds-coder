@@ -791,6 +791,30 @@ $(function () {
       });
     });
 
+    // Listener for canonical export button
+    $('#canonical-export-button').click(function(e) {
+      e.preventDefault();
+      var events = $('.export-checkbox:checked');
+
+      // make sure something is checked
+      if (typeof events !== 'undefined' && events.length > 0) {
+        var event_ids = [];
+        events.each(function() {
+          event_ids.push($(this).val());
+        });
+
+        var req = $.ajax({
+          url: $SCRIPT_ROOT + '/download_canonical/' + event_ids.join(','), 
+          type: "GET"
+        })
+        .done(function() {
+          window.location.href = $SCRIPT_ROOT + '/download_canonical/' + event_ids.join(',');
+        });
+      } else {
+        return makeError('Please select at least one event to export.');
+      }
+    });
+
     // Listener for canonical event search
     $('#canonical-search-button').click(function(e) {
       e.preventDefault();

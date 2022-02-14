@@ -671,7 +671,9 @@ def load_recent_canonical_events():
         filter(RecentCanonicalEvent.coder_id == current_user.id).\
         order_by(desc(RecentCanonicalEvent.last_accessed)).limit(5).all()
 
-    return render_template('adj-canonical-search-block.html', events = events, flags = [])
+    return render_template('adj-canonical-search-block.html', 
+        events = events, 
+        is_search = False)
 
 #####
 ## Search functions
@@ -824,7 +826,9 @@ def search_canonical():
     ## search for the canonical event in key and notes
     rs = db_session.query(CanonicalEvent).filter(filter_expr).all()
 
-    return render_template('adj-canonical-search-block.html', events = rs)
+    return render_template('adj-canonical-search-block.html', 
+        events = rs,
+        is_search = True)
 
 
 @app.route('/adj_search/<function>', methods = ['POST'])
@@ -1053,43 +1057,46 @@ def del_event_flag():
     return make_response("Flag deleted.", 200)
 
 
-@app.route('/download_canonical/<key>', methods = ['GET', 'POST'])
+@app.route('/download_canonical/<event_ids>', methods = ['GET'])
 @login_required
-def download_canonical(key):
-    """ Downloads a canonical event data based on key. Serves it as a CSV. """
-    ce = db_session.query(CanonicalEvent).filter(CanonicalEvent.key == key).first()
-    data = {}
-    if not ce:
-        return make_response("No such canonical event.", 500)
+def download_canonical(event_ids):
+    """ Downloads canonical events based on IDs. Serves it as a CSV. """
+    event_ids = [int(x) for x in event_ids.split(',')]
+    all_data = []
 
-    cecs = db_session.query(CodeEventCreator).\
-        join(CanonicalEventLink, CodeEventCreator.id == CanonicalEventLink.cec_id).\
-        filter(CanonicalEventLink.canonical_id == ce.id).all()
+    for canonical_id in event_ids:
+        data = {}
+        ce   = db_session.query(CanonicalEvent).filter(CanonicalEvent.id == canonical_id).first()
+        cecs = db_session.query(CodeEventCreator).\
+            join(CanonicalEventLink, CodeEventCreator.id == CanonicalEventLink.cec_id).\
+            filter(CanonicalEventLink.canonical_id == ce.id).all()
 
-    ## get all canonical metadata
-    data['key'] = ce.key
-    data['coder'] = db_session.query(User).filter(User.id == ce.coder_id).first().username
-    data['description'] = ce.description
-    data['notes'] = ce.notes
+        ## get all canonical metadata
+        data['key'] = ce.key
+        data['coder'] = db_session.query(User).filter(User.id == ce.coder_id).first().username
+        data['description'] = ce.description
+        data['notes'] = ce.notes
 
-    ## load all the CEC data from the database
-    for cec in cecs:
-        if cec.variable not in data:
-            data[cec.variable] = []
-        data[cec.variable].append(cec.text if cec.text else cec.value)
+        ## load all the CEC data from the database
+        for cec in cecs:
+            if cec.variable not in data:
+                data[cec.variable] = []
+            data[cec.variable].append(cec.text if cec.text else cec.value)
 
-    ## collapse lists
-    for k in data.keys():
-        if type(data[k]) == list:
-            data[k] = ';'.join(data[k])
+        ## collapse lists
+        for k in data.keys():
+            if type(data[k]) == list:
+                data[k] = ';'.join(data[k])
+        
+        all_data.append(data)
 
-    path = '{}/exports/{}_{}.csv'.\
+    path = '{}/exports/canonical-events_{}.csv'.\
         format(app.config['WD'],
-        ce.key,
         dt.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
 
     ## let pandas do all the heavy lifting for CSV formatting
-    df = pd.DataFrame(data, columns = data.keys(), index = [0])
+    df = pd.DataFrame(all_data)
+    df = df.set_index('key')
     df.to_csv(path, encoding = 'utf-8')
 
     return send_file(path, as_attachment = True)

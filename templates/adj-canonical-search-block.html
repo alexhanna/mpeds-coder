@@ -3,25 +3,33 @@
     data-event="{{ e.id }}"
     data-key="{{ e.key }}">
     <div class="row">
-        <!-- <div class="col-sm-1">
-            <form>
-                <input type="checkbox" 
-                name="canonical-event-checkbox" 
-                id="canonical-event-checkbox_{{ e.id }}" 
-                value="{{ e.id }}" />
-            </form>
-        </div> -->
-        <div class="col-sm-8">
-            <b>key:</b> {{ e.key }}</br>
-            <b>canonical_id:</b> {{ e.id }}<br/>
-            <b>coder:</b> {{ e.coder_id }} <br/>
-            <b>last updated:</b> {{ e.last_updated }} 
+        <div class="col-sm-9">
+            {% if is_search %}
+                <form>
+                    <label for="canonical-event-checkbox_{{ e.id }}">
+                        <span class="glyphicon glyphicon-download"></span>
+                    </label>
+                    <input type="checkbox" 
+                    class="form-check-input export-checkbox"
+                    name="canonical-event-checkbox_{{ e.id }}" 
+                    id="canonical-event-checkbox_{{ e.id }}"
+                    value="{{ e.id }}" />
+                </form>
+            {% endif %}
+            <b>key:</b> {{ e.key }}
         </div>
-        <div class="col-sm-2">
+        <div class="col-sm-3">
             <a href="#" class="canonical-makeactive">
                 <b>Add to grid <span class="glyphicon glyphicon-export"></span></b>
             </a>
             <b class="canonical-isactive text-muted" style="display:none;">In the grid</b>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <b>canonical_id:</b> {{ e.id }}<br/>
+            <b>coder:</b> {{ e.coder_id }} <br/>
+            <b>last updated:</b> {{ e.last_updated }} 
         </div>
     </div>
     <div class="row">
