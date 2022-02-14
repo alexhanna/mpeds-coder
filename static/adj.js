@@ -103,32 +103,37 @@ var loadGrid = function(canonical_event_key = null, cand_events_str = null) {
   return true;
 }
 
-
 /**
- * Removes the block from the canonical record.
+ * Loads the recent candidate events from the database.
  * @returns true if successful, false otherwise.
  */
-var removeCanonical = function () {
-  var target = $(this).closest('.expanded-event-variable');
-  var cel_id = target.attr('data-key');
-  var variable = target.attr('data-var');
-  var block_id = '#canonical-' + variable + '_' + cel_id;
-
+var loadRecentCandidateEvents = function() {
   var req = $.ajax({
-    type: 'POST',
-    url: $SCRIPT_ROOT + '/del_canonical_record',
-    data: {
-      cel_id: cel_id
-    }
+    url: $SCRIPT_ROOT + '/load_recent_candidate_events',
+    type: 'POST'
   })
   .done(function() {
-    // remove block
-    $(block_id).remove();
+    $('#cand-recent_block').html(req.responseText);
     return true;
   })
   .fail(function() { return makeError(req.responseText); });
 }
 
+/**
+ * Loads the recent canonical events from the database.
+ * @returns true if successful, false otherwise.
+ */
+ var loadRecentCanonicalEvents = function() {
+  var req = $.ajax({
+    url: $SCRIPT_ROOT + '/load_recent_canonical_events',
+    type: 'POST'
+  })
+  .done(function() {
+    $('#canonical-recent_block').html(req.responseText);
+    return true;
+  })
+  .fail(function() { return makeError(req.responseText); });
+}
 
 /**
  * Loads the search results for the given query from the existing forms.
@@ -174,6 +179,32 @@ var removeCanonical = function () {
     // get rid of loading flash 
     $('.flash').hide();
     $('.flash').removeClass('alert-info');
+    return true;
+  })
+  .fail(function() { return makeError(req.responseText); });
+}
+
+
+/**
+ * Removes the block from the canonical record.
+ * @returns true if successful, false otherwise.
+ */
+ var removeCanonical = function () {
+  var target = $(this).closest('.expanded-event-variable');
+  var cel_id = target.attr('data-key');
+  var variable = target.attr('data-var');
+  var block_id = '#canonical-' + variable + '_' + cel_id;
+
+  var req = $.ajax({
+    type: 'POST',
+    url: $SCRIPT_ROOT + '/del_canonical_record',
+    data: {
+      cel_id: cel_id
+    }
+  })
+  .done(function() {
+    // remove block
+    $(block_id).remove();
     return true;
   })
   .fail(function() { return makeError(req.responseText); });
@@ -388,6 +419,7 @@ var initializeSearchListeners = function() {
 
     if (success) {
       markGridEvents(cand_events);
+      loadRecentCandidateEvents();
     }
 
     return true;
@@ -415,6 +447,7 @@ var initializeCanonicalSearchListeners = function() {
 
     if (success) {
       markCanonicalGridEvent(event_desc);
+      loadRecentCanonicalEvents();
     }
   });
 }
@@ -528,7 +561,6 @@ var initializeGridListeners = function() {
         e.preventDefault(); 
         updateModal(variable, 'add');
       });
-
     })
     .fail(function() { return makeError("Could not load modal."); })
   });
@@ -551,7 +583,8 @@ var initializeGridListeners = function() {
       url: $SCRIPT_ROOT + '/modal_view',
       data: {
         variable: 'canonical',
-        key: canonical_event_key
+        key: canonical_event_key,
+        edit: true
       }
     })
     .done(function() {
@@ -561,7 +594,31 @@ var initializeGridListeners = function() {
       $('#modal-submit').click(function(e) { 
         e.preventDefault(); 
         updateModal('canonical', 'edit'); 
-      });      
+      });
+
+      // Delete canonical event 
+      $('#modal-delete').click(function () {
+        var r = confirm("Are you sure you want to delete the current canonical event?")
+        if (r == false) {
+          return;
+        }
+
+        // remove from the database via Ajax call
+        var req = $.ajax({
+          url: $SCRIPT_ROOT + '/del_canonical_event',
+          type: "POST",
+          data: {
+            key: canonical_event_key
+          }
+        })
+        .done(function() {
+          $('#modal-container').modal('hide');
+
+          loadGrid('', getCandidates());
+          return makeSuccess(req.responseText);
+        })
+        .fail(function() { return makeError(req.responseText); });
+      });
     })
     .fail(function() { return makeError("Could not load modal."); })
   });
@@ -637,30 +694,6 @@ var initializeGridListeners = function() {
 
   // Remove flag
   $('.remove-flag').click(function(e) { toggleFlag(e, 'del', 'for-review') });
-
-  // Delete canonical event 
-  $('div.canonical-event-metadata a.glyphicon-trash').click(function () {
-    var r = confirm("Are you sure you want to delete the current canonical event?")
-    if (r == false) {
-      return;
-    }
-
-    var canonical_event_id = $('div.canonical-event-metadata').attr('id').split('_')[1];
-
-    // remove from the database via Ajax call
-    var req = $.ajax({
-      url: $SCRIPT_ROOT + '/del_canonical_event',
-      type: "POST",
-      data: {
-        id: canonical_event_id
-      }
-    })
-    .done(function() {
-      loadGrid('', getCandidates());
-      return makeSuccess(req.responseText);
-    })
-    .fail(function() { return makeError(req.responseText); });
-  });
 
   // Remove canonical event from grid
   $('div.canonical-event-metadata a.glyphicon-remove-sign').click(function () {
@@ -822,4 +855,6 @@ $(function () {
       search_params.get('canonical_event_key'),      
       search_params.get('cand_events')
     );
+    loadRecentCandidateEvents();
+    loadRecentCanonicalEvents();    
 });

@@ -70,8 +70,10 @@
                 <label>Canonical Event<br/> 
                     <div class="action-buttons">
                         <a class="glyphicon glyphicon-pencil edit-canonical" href="#" title="Edit canonical metadata"></a> 
-                        <a class="glyphicon glyphicon-trash" href="#" title="Delete canonical event"></a>
                         <a class="glyphicon glyphicon-remove-sign" href="#" title="Remove from grid"></a>
+                        <a class="glyphicon glyphicon-download download-canonical" 
+                            href="{{ url_for('download_canonical', key = canonical_event['key']) }}" 
+                            title="Download canonical event data"></a>
                     </div>
                 </label>
                 {% for var in ['key', 'notes'] %}

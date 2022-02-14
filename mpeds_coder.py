@@ -38,7 +38,7 @@ from pytz import timezone
 
 ## flask
 from flask import Flask, request, session, g, redirect, url_for, abort, make_response,\
-    render_template, flash, jsonify
+    render_template, send_file, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
 
 ## jinja
@@ -53,7 +53,7 @@ from sqlalchemy import func, desc, distinct, and_, or_
 ## app-specific
 from database import db_session
 
-from models import ArticleMetadata, ArticleQueue, CanonicalEvent, CanonicalEventLink, \
+from models import ArticleMetadata, ArticleQueue, CanonicalEvent, CanonicalEventLink, CanonicalEventRelationship, \
     CoderArticleAnnotation, CodeFirstPass, CodeSecondPass, CodeEventCreator, \
     Event, EventCreatorQueue, EventFlag, EventMetadata, \
     RecentEvent, RecentCanonicalEvent, SecondPassQueue, User
@@ -602,17 +602,6 @@ def adj():
     if current_user.authlevel < 2: 
         return redirect(url_for('index'))
 
-    ## Get most recent candidate events.
-    recent_events = [x[0] for x in db_session.query(EventMetadata, RecentEvent).\
-        join(EventMetadata, EventMetadata.event_id == RecentEvent.event_id).\
-        order_by(desc(RecentEvent.last_accessed)).limit(5).all()]
-
-    ## Get most recent canonical events.
-    ## TODO: Add in user by name.
-    recent_canonical_events = db_session.query(CanonicalEvent).\
-        join(RecentCanonicalEvent, CanonicalEvent.id == RecentCanonicalEvent.canonical_id).\
-        order_by(desc(RecentCanonicalEvent.last_accessed)).limit(5).all()
-
     ## TODO: Base this off EventMetadata for now. Eventually, we want to get rid of this.
     filter_fields = EventMetadata.__table__.columns.keys()
     filter_fields.remove('id')
@@ -625,8 +614,8 @@ def adj():
         adj_grid_order = adj_grid_order,
         links          = [],
         flags          = [],
-        recent_events  = recent_events,
-        recent_canonical_events = recent_canonical_events,
+        recent_events  = [],
+        recent_canonical_events = [],
         canonical_event = None)
 
 
@@ -643,7 +632,11 @@ def load_adj_grid():
         canonical_event_key = None
 
     cand_event_ids = [int(x) for x in ce_ids.split(',')] if ce_ids else []
-    
+
+    ## store recent events
+    _store_recent_events(cand_event_ids, canonical_event_key)
+
+    ## do loading for the grid    
     cand_events = _load_candidate_events(cand_event_ids)
     canonical_event = _load_canonical_event(key = canonical_event_key)
     links = _load_links(canonical_event_key)
@@ -655,6 +648,30 @@ def load_adj_grid():
         links = links,
         flags = event_flags, 
         adj_grid_order = adj_grid_order)
+
+
+@app.route('/load_recent_candidate_events', methods = ['POST'])
+@login_required
+def load_recent_candidate_events():
+    """ Load and render most recent candidate events. """
+    events = [x[0] for x in db_session.query(EventMetadata, RecentEvent).\
+        join(EventMetadata, EventMetadata.event_id == RecentEvent.event_id).\
+        filter(RecentEvent.coder_id == current_user.id).\
+        order_by(desc(RecentEvent.last_accessed)).limit(5).all()]
+
+    return render_template('adj-search-block.html', events = events, flags = [])
+
+
+@app.route('/load_recent_canonical_events', methods = ['POST'])
+@login_required
+def load_recent_canonical_events():
+    """ Load and render most recent canonical events. """
+    events = db_session.query(CanonicalEvent).\
+        join(RecentCanonicalEvent, CanonicalEvent.id == RecentCanonicalEvent.canonical_id).\
+        filter(RecentCanonicalEvent.coder_id == current_user.id).\
+        order_by(desc(RecentCanonicalEvent.last_accessed)).limit(5).all()
+
+    return render_template('adj-canonical-search-block.html', events = events, flags = [])
 
 #####
 ## Search functions
@@ -685,6 +702,11 @@ def do_search():
                 _filter = getattr(getattr(_model, filter_field), '__eq__')(filter_value)
             elif filter_compare == 'ne':
                 _filter = getattr(getattr(_model, filter_field), '__ne__')(filter_value)
+
+                ## in the case where we're excluding a flag, need to OR "flag IS NULL"
+                if filter_field == 'flag':
+                    _filter2 = getattr(getattr(_model, filter_field), '__eq__')(None)
+                    _filter = or_(_filter, _filter2)
             elif filter_compare == 'lt':
                 _filter = getattr(getattr(_model, filter_field), '__lt__')(filter_value)
             elif filter_compare == 'le':
@@ -701,7 +723,7 @@ def do_search():
                 _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}'.format(filter_value))
             else:
                 raise Exception('Invalid filter compare: {}'.format(filter_compare))
- 
+
             filters.append(_filter)
 
         sort_field = request.form['adj_sort_field_{}'.format(i)]
@@ -937,14 +959,14 @@ def add_event_flag():
 @login_required
 def del_canonical_event():
     """ Deletes the canonical event and related CEC links from the database."""
-    id = int(request.form['id'])
+    key = request.form['key']
 
-    cels = db_session.query(CanonicalEventLink)\
-        .filter(CanonicalEventLink.canonical_id == id).all()
-    rces = db_session.query(RecentCanonicalEvent)\
-        .filter(RecentCanonicalEvent.canonical_id == id).all()
     ce = db_session.query(CanonicalEvent)\
-        .filter(CanonicalEvent.id == id).first()
+        .filter(CanonicalEvent.key == key).first()
+    cels = db_session.query(CanonicalEventLink)\
+        .filter(CanonicalEventLink.canonical_id == ce.id).all()
+    rces = db_session.query(RecentCanonicalEvent)\
+        .filter(RecentCanonicalEvent.canonical_id == ce.id).all()
 
     ## remove these first to avoid FK error
     for cel in cels:
@@ -1031,6 +1053,48 @@ def del_event_flag():
     return make_response("Flag deleted.", 200)
 
 
+@app.route('/download_canonical/<key>', methods = ['GET', 'POST'])
+@login_required
+def download_canonical(key):
+    """ Downloads a canonical event data based on key. Serves it as a CSV. """
+    ce = db_session.query(CanonicalEvent).filter(CanonicalEvent.key == key).first()
+    data = {}
+    if not ce:
+        return make_response("No such canonical event.", 500)
+
+    cecs = db_session.query(CodeEventCreator).\
+        join(CanonicalEventLink, CodeEventCreator.id == CanonicalEventLink.cec_id).\
+        filter(CanonicalEventLink.canonical_id == ce.id).all()
+
+    ## get all canonical metadata
+    data['key'] = ce.key
+    data['coder'] = db_session.query(User).filter(User.id == ce.coder_id).first().username
+    data['description'] = ce.description
+    data['notes'] = ce.notes
+
+    ## load all the CEC data from the database
+    for cec in cecs:
+        if cec.variable not in data:
+            data[cec.variable] = []
+        data[cec.variable].append(cec.text if cec.text else cec.value)
+
+    ## collapse lists
+    for k in data.keys():
+        if type(data[k]) == list:
+            data[k] = ';'.join(data[k])
+
+    path = '{}/exports/{}_{}.csv'.\
+        format(app.config['WD'],
+        ce.key,
+        dt.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+
+    ## let pandas do all the heavy lifting for CSV formatting
+    df = pd.DataFrame(data, columns = data.keys(), index = [0])
+    df.to_csv(path, encoding = 'utf-8')
+
+    return send_file(path, as_attachment = True)
+
+
 @app.route('/modal_edit/<variable>/<mode>', methods = ['POST'])
 @login_required
 def modal_edit(variable, mode):
@@ -1091,6 +1155,7 @@ def modal_view():
     """Returns the template for the modal, based on the variable."""
     article_ids = []
     variable = request.form['variable']
+    edit = True if request.form.get('edit') == 'true' else False
 
     ## get the canonical event to get the ID later
     ce = None
@@ -1113,7 +1178,7 @@ def modal_view():
             article_ids = article_ids,
             preset_vars = preset_vars)
     else:
-        return render_template('modal.html', variable = variable, ce = ce)
+        return render_template('modal.html', variable = variable, ce = ce, edit = edit)
             
 
 #####
@@ -1267,6 +1332,57 @@ def _load_links(canonical_event_key):
         
     return links
 
+
+@app.route('/_store_recent_events')
+@login_required
+def _store_recent_events(cand_event_ids, canonical_event_key):
+    """ Stores the recent events. Occurs with the grid reload. """
+
+    if cand_event_ids:
+        for ce_id in cand_event_ids:
+            ## load the event for this user
+            event = db_session.query(RecentEvent).\
+                filter(
+                    RecentEvent.id == ce_id, 
+                    RecentEvent.coder_id == current_user.id
+                ).first()
+
+            ## update if it exists
+            if event:
+                event.last_accessed = dt.datetime.now()
+                db_session.add(event)
+                db_session.commit()
+            else:
+                event = RecentEvent(current_user.id, ce_id)
+                db_session.add(event)
+                db_session.commit()
+    
+    if canonical_event_key:
+        ## load the canonical event for this user
+        canonical_id = db_session.query(CanonicalEvent).\
+            filter(CanonicalEvent.key == canonical_event_key).first().id
+
+        event = db_session.query(RecentCanonicalEvent).\
+            filter(
+                RecentCanonicalEvent.id == canonical_id, 
+                RecentCanonicalEvent.coder_id == current_user.id
+            ).first()
+
+        ## update if it exists
+        if event:
+            event.last_accessed = dt.datetime.now()
+            db_session.add(event)
+            db_session.commit()
+        else:
+            event = RecentCanonicalEvent(current_user.id, canonical_id)
+            db_session.add(event)
+            db_session.commit()
+
+    return None
+
+#####
+##### Pagination helpers
+#####
 
 class Pagination(object):
     """
