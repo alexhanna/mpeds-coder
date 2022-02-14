@@ -1340,17 +1340,21 @@ def _store_recent_events(cand_event_ids, canonical_event_key):
 
     if cand_event_ids:
         for ce_id in cand_event_ids:
-            ## load the event for this user
-            event = db_session.query(RecentEvent).\
+            ## load recent events for this user
+            events = db_session.query(RecentEvent).\
                 filter(
-                    RecentEvent.id == ce_id, 
+                    RecentEvent.event_id == ce_id, 
                     RecentEvent.coder_id == current_user.id
-                ).first()
+                ).order_by(desc(RecentEvent.last_accessed)).all()
 
-            ## update if it exists
-            if event:
-                event.last_accessed = dt.datetime.now()
-                db_session.add(event)
+            ## if there's more than one event record, delete the oldest ones
+            if len(events) > 1:
+                for event in events[1:]:
+                    db_session.delete(event)
+                    db_session.commit()
+            elif len(events) == 1:
+                events[0].last_accessed = dt.datetime.now()
+                db_session.add(events[0])
                 db_session.commit()
             else:
                 event = RecentEvent(current_user.id, ce_id)
@@ -1358,20 +1362,25 @@ def _store_recent_events(cand_event_ids, canonical_event_key):
                 db_session.commit()
     
     if canonical_event_key:
-        ## load the canonical event for this user
+        ## load the canonical event
         canonical_id = db_session.query(CanonicalEvent).\
             filter(CanonicalEvent.key == canonical_event_key).first().id
 
-        event = db_session.query(RecentCanonicalEvent).\
+        ## load recent events for this user
+        events = db_session.query(RecentCanonicalEvent).\
             filter(
-                RecentCanonicalEvent.id == canonical_id, 
+                RecentCanonicalEvent.canonical_id == canonical_id, 
                 RecentCanonicalEvent.coder_id == current_user.id
-            ).first()
+            ).order_by(desc(RecentCanonicalEvent.last_accessed)).all()
 
-        ## update if it exists
-        if event:
-            event.last_accessed = dt.datetime.now()
-            db_session.add(event)
+        ## if there's more than one canonical event record, delete the oldest ones
+        if len(events) > 1:
+            for event in events[1:]:
+                db_session.delete(event)
+                db_session.commit()
+        elif len(events) == 1:
+            events[0].last_accessed = dt.datetime.now()
+            db_session.add(events[0])
             db_session.commit()
         else:
             event = RecentCanonicalEvent(current_user.id, canonical_id)

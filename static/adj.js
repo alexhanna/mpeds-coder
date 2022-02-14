@@ -129,7 +129,7 @@ var loadRecentCandidateEvents = function() {
     type: 'POST'
   })
   .done(function() {
-    $('#canonical-recent_block').html(req.responseText);
+    $('#canonical-recent-search-block').html(req.responseText);
     return true;
   })
   .fail(function() { return makeError(req.responseText); });

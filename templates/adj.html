@@ -105,21 +105,26 @@
                 <div class="canonical-subtab-pane" id="canonical-search_block">
                     <h5>Search</h5>
                     <div class="row">
-                        <div class="form-group col-sm-9">
+                        <div class="form-group col-sm-8">
                             <input class="form-control form-control-sm" 
                                     name="canonical-search-term" 
                                     id="canonical-search-term"
                                     type="text" 
                                     placeholder="Search term (key or keyword in notes/description)"/>
                         </div>
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <button id="canonical-search-button" class="btn btn-primary btn-sm">Search</button>
+                            <!-- <button id="canonical-export-button" class="btn btn-primary btn-sm" disabled>Export</button> -->
                         </div>
                     </div>
-                    {% set events = [] %}
-                    {% include 'adj-canonical-search-block.html' %}
+                    <div class="event-group" id="canonical-search-block">
+                        {% set events = [] %}
+                        {% include 'adj-canonical-search-block.html' %}
+                    </div>                    
                 </div>
-                <div class="canonical-subtab-pane" id="canonical-recent_block" style="display:none;"></div>
+                <div class="canonical-subtab-pane" id="canonical-recent_block" style="display:none;">
+                    <div class="event-group" id="canonical-recent-search-block"></div>
+                </div>
             </div>
             <div class="tab-pane" id="relationships_block">
                 <h5>Add relationship</h5> 
@@ -140,10 +145,10 @@
                         <div class="form-group col-sm-4">
                             <select class="form-control form-control-sm" name="relationship-type">
                                 <option>Campaign</option>
-                                <option>Sub-event</option>
+                                <option>Coinciding</option>
                                 <option>Counterprotest</option>
                                 <option>Solidarity</option>
-                                <option>Coordinated</option>
+                                <option>Sub-event</option>
                             </select>
                         </div>
                         <div class="form-group col-sm-2">
