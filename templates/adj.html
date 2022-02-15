@@ -128,37 +128,35 @@
             </div>
             <div class="tab-pane" id="relationships_block">
                 <h5>Add relationship</h5> 
-                <form> 
-                    <div class="form-row">
-                        <div class="form-group col-sm-3">
-                            <input class="form-control form-control-sm" 
-                                name="search-key-1" 
-                                type="text" 
-                                placeholder = "Key 1..."/>
-                        </div>
-                        <div class="form-group col-sm-3">
-                            <input class="form-control form-control-sm" 
-                                name="search-key-2" 
-                                type="text" 
-                                placeholder = "Key 2..."/>
-                        </div>
-                        <div class="form-group col-sm-4">
-                            <select class="form-control form-control-sm" name="relationship-type">
-                                <option>Campaign</option>
-                                <option>Coinciding</option>
-                                <option>Counterprotest</option>
-                                <option>Solidarity</option>
-                                <option>Sub-event</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-sm-2">
-                            <button type="submit" class="btn btm-primary">Add <span class="glyphicon glyphicon-plus"></span></button>
-                        </div> 
+                <div class="row">
+                    <div class="col-sm-3">
+                        <input class="form-control form-control-sm" 
+                            name="relationship-key-1" 
+                            type="text" 
+                            placeholder = "Key 1..."/>
                     </div>
-                </form>
+                    <div class="col-sm-4">
+                        <select class="form-control form-control-sm" name="relationship-type">
+                            <option value="campaign">is a campaign of</option>
+                            <option value="coinciding">coincides with</option>
+                            <option value="counterprotest">is a counterprotest to</option>
+                            <option value="solidarity">is in solidarity with</option>
+                            <option value="subevent">is a sub-event of</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <input class="form-control form-control-sm" 
+                            name="relationship-key-2" 
+                            type="text" 
+                            placeholder = "Key 2..."/>
+                    </div>
+                    <div class="col-sm-2">
+                        <button id="add-relationship-button" class="btn btn-primary btn-sm">Add</button>
+                    </div> 
+                </div>
                 <hr />
-                <div class="form-row">
-                    <h5>View hierarchy</h5> </br>
+                <h5>View hierarchy</h5>
+                <div class="row">
                     <div class="form-group col-sm-8">
                         <input class="form-control form-control-sm" 
                             name="view-key" 

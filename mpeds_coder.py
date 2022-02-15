@@ -1097,6 +1097,19 @@ def download_canonical(event_ids):
     ## let pandas do all the heavy lifting for CSV formatting
     df = pd.DataFrame(all_data)
     df = df.set_index('key')
+    
+    ## order of presenting
+    df_order = ['coder', 'description', 'notes']
+
+    ## remove any columns not in the dataframe
+    for k in [k[0] for k in adj_grid_order]:
+        if k in df.columns:
+            df_order.append(k)
+
+    ## reorder the columns
+    df = df[df_order]
+
+    ## write to file
     df.to_csv(path, encoding = 'utf-8')
 
     return send_file(path, as_attachment = True)
