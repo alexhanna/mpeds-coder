@@ -675,6 +675,37 @@ def load_recent_canonical_events():
         events = events, 
         is_search = False)
 
+
+@app.route('/load_canonical_hierarchy', methods = ['POST'])
+@login_required
+def load_canonical_hierarchy():
+    """ Load and render canonical event hierarchy. """
+    key = request.form['key']
+    cid = _load_canonical_id_from_key(key)
+
+    if not cid:
+        return make_response("Invalid key.", 400)
+
+    parents = db_session.query(CanonicalEvent, CanonicalEventRelationship)\
+        .join(CanonicalEventRelationship, CanonicalEvent.id == CanonicalEventRelationship.canonical_id2)\
+        .filter(CanonicalEventRelationship.canonical_id1 == cid)\
+        .order_by(CanonicalEventRelationship.relationship_type, CanonicalEvent.key).all()
+
+    children = db_session.query(CanonicalEvent, CanonicalEventRelationship)\
+        .join(CanonicalEventRelationship, CanonicalEvent.id == CanonicalEventRelationship.canonical_id1)\
+        .filter(CanonicalEventRelationship.canonical_id2 == cid)\
+        .order_by(CanonicalEventRelationship.relationship_type, CanonicalEvent.key).all()            
+
+    # links = [x[0] for x in db_session.query(distinct(CodeEventCreator.event_id))\
+    #     .join(CanonicalEventLink, CanonicalEventLink.cec_id == CodeEventCreator.id)\
+    #     .filter(CanonicalEventLink.canonical_id == cid).all()]
+
+    return render_template('adj-canonical-hierarchy.html',
+        key = key,
+        cid = cid,
+        parents = parents, 
+        children = children)
+
 #####
 ## Search functions
 #####
@@ -805,6 +836,19 @@ def do_search():
     response.headers['Search-Results'] = len(search_events)
     response.headers['Query'] = json.dumps(url_params)
     return response
+
+
+@app.route('/search_canonical_events', methods=['POST'])
+@login_required
+def search_canonical_events():
+    """Returns a list of canonical event keys based on search term."""
+    term = request.form['term']
+
+    ## search for the canonical event in key 
+    rs = db_session.query(CanonicalEvent).filter(CanonicalEvent.key.like('%{}%'.format(term))).all()
+
+    ## return the list of canonical event keys
+    return jsonify(result={"status": 200, "data": [x.key for x in rs]})
 
 
 @app.route('/search_canonical', methods = ['POST'])
@@ -944,6 +988,69 @@ def add_canonical_record():
         value = value,
         timestamp = cel.timestamp,
         cel_id = cel.id) 
+
+
+@app.route('/add_canonical_relationship', methods = ['POST'])
+@login_required
+def add_canonical_relationship():
+    key1 = request.form['key1']
+    key2 = request.form['key2']
+    rtype = request.form['type']
+
+    if key1 == '' or key2 == '':
+        return make_response("Please enter a key for both values.", 400)
+
+    if key1 == key2:
+        return make_response("Please enter two different keys.", 400)
+
+    ## get ids
+    id1 = _load_canonical_id_from_key(key1)
+    id2 = _load_canonical_id_from_key(key2)
+
+    if id1 is None or id2 is None:
+        return make_response("One or more keys are invalid.", 400)
+
+    ## check if this relationship exists already
+    res = db_session.query(CanonicalEventRelationship)\
+        .filter(
+            CanonicalEventRelationship.canonical_id1 == id1,
+            CanonicalEventRelationship.canonical_id2 == id2,
+            CanonicalEventRelationship.relationship_type == rtype
+        ).first()
+
+    if res:
+        return make_response("Relationship of this type already exists.", 400)
+
+    ## commit
+    db_session.add(CanonicalEventRelationship(current_user.id, id1, id2, rtype))
+    db_session.commit()
+
+    return make_response("Relationship added.", 200)
+
+
+@app.route('/delete_canonical_relationship', methods = ['POST'])
+@login_required
+def delete_canonical_relationship():
+    id1 = int(request.form['id1'])
+    id2 = int(request.form['id2'])
+    rtype = request.form['type']
+
+    ## check if this relationship exists
+    res = db_session.query(CanonicalEventRelationship)\
+        .filter(
+            CanonicalEventRelationship.canonical_id1 == id1,
+            CanonicalEventRelationship.canonical_id2 == id2,
+            CanonicalEventRelationship.relationship_type == rtype
+        ).first()
+
+    if not res:
+        return make_response("Relationship does not exist.", 400)
+
+    ## commit
+    db_session.delete(res)
+    db_session.commit()
+
+    return make_response("Relationship deleted.", 200)
 
 
 @app.route('/add_event_flag', methods = ['POST'])
@@ -1325,6 +1432,18 @@ def _load_canonical_event(id = None, key = None):
         canonical_event[cec.variable].append((cel.id, value, cel.timestamp, cec.event_id, is_dummy))
 
     return canonical_event
+
+
+@app.route('/_load_canonical_id_from_key')
+@login_required
+def _load_canonical_id_from_key(key):
+    """Helper function to load the canonical event ID from the key."""
+    cid = db_session.query(CanonicalEvent.id).\
+        filter(CanonicalEvent.key == key).first()
+
+    if not cid:
+        return None
+    return cid[0]
 
 
 @app.route('/_load_event_flags')

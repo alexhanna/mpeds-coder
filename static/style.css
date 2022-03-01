@@ -511,3 +511,35 @@ div.event-desc div.row {
 	padding: 2px;
 	border-bottom: 1px dotted #DDD;
 }
+
+/* Relationships */
+
+div#view-hierarchy {
+	font-size: 0.8em;
+}
+
+div#view-hierarchy .sub {
+	display: block;
+	margin-left: 10px;
+}
+
+.hierarchy-parent,
+.hierarchy-child {
+	display: block;
+}
+
+ul.ui-autocomplete-adj li {
+	background-color: #FFF;
+	list-style-type: none;
+	cursor: default;
+	margin: 0 2px;
+	padding: 0 2px;
+	width: 33%;
+	font-size: 0.8em;
+	border-left: 1px solid #CCC;
+	border-right: 1px solid #CCC;
+}
+
+ul.ui-autocomplete-adj li:hover {
+	background-color: #CCC;
+}

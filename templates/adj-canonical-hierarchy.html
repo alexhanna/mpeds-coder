@@ -1,0 +1,41 @@
+<div class="hierarchy-wrapper" data-key="{{ key }}" data-id="{{ cid }}">
+    <div class="sub">
+        <b>parents:</b> 
+        {% if parents %}
+            <div class="sub">
+            {% for parent, relationship in parents %}
+                <div class="hierarchy-parent" 
+                    data-id="{{ parent.id }}" 
+                    data-key="{{ parent.key }}"
+                    data-type="{{ relationship.relationship_type }}">
+                    {{ parent.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
+                    <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a>
+                    <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
+                </div>
+            {% endfor %}
+            </div> 
+        {% else %}
+            <span class="text-muted">(none)</span>
+        {% endif %}
+    </div>
+
+    <div class="sub">
+        <b>children:</b> 
+        {% if children %}
+            <div class="sub">
+            {% for child, relationship in children %}
+                <div class="hierarchy-child" 
+                    data-id="{{ child.id }}"
+                    data-key="{{ child.key }}"
+                    data-type="{{ relationship.relationship_type }}">
+                    {{ child.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
+                    <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a> 
+                    <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
+                </div> 
+            {% endfor %}
+            </div>
+        {% else %}
+            <span class="text-muted">(none)</span>
+        {% endif %}
+    </div>
+</div>

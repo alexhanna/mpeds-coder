@@ -129,28 +129,33 @@
             <div class="tab-pane" id="relationships_block">
                 <h5>Add relationship</h5> 
                 <div class="row">
-                    <div class="col-sm-3">
+                    <div class="col-sm-8">
                         <input class="form-control form-control-sm" 
                             name="relationship-key-1" 
+                            id = "relationship-key-1"
                             type="text" 
-                            placeholder = "Key 1..."/>
+                            placeholder = "Key 1... (Child Event)"/>
                     </div>
-                    <div class="col-sm-4">
-                        <select class="form-control form-control-sm" name="relationship-type">
+                </div>
+                <div class="row">
+                    <div class="col-sm-8">
+                        <select class="form-control form-control-sm" id="relationship-type" name="relationship-type">
                             <option value="campaign">is a campaign of</option>
                             <option value="coinciding">coincides with</option>
                             <option value="counterprotest">is a counterprotest to</option>
                             <option value="solidarity">is in solidarity with</option>
-                            <option value="subevent">is a sub-event of</option>
                         </select>
                     </div>
-                    <div class="col-sm-3">
+                </div>
+                <div class="row">
+                    <div class="col-sm-8">
                         <input class="form-control form-control-sm" 
                             name="relationship-key-2" 
+                            id = "relationship-key-2"
                             type="text" 
-                            placeholder = "Key 2..."/>
+                            placeholder = "Key 2... (Parent Event)"/>
                     </div>
-                    <div class="col-sm-2">
+                    <div class="col-sm-4">
                         <button id="add-relationship-button" class="btn btn-primary btn-sm">Add</button>
                     </div> 
                 </div>
@@ -159,13 +164,18 @@
                 <div class="row">
                     <div class="form-group col-sm-8">
                         <input class="form-control form-control-sm" 
-                            name="view-key" 
+                            name="relationship-key-3"
+                            id="relationship-key-3" 
                             type="text" 
                             placeholder = "Key..."/>
                     </div>
-                    <p>
-                        <img src="static/example-event-hierarchy.png" width="50%"/>                        
-                    </p>
+                    <div class="col-sm-4">
+                        <button id="view-hierarchy-button" class="btn btn-primary btn-sm">View</button>
+                    </div> 
+                </div>
+                <hr />
+                <div class="row">
+                    <div class="col-sm-12" id="view-hierarchy"></div>
                 </div>
             </div>     
         </div>

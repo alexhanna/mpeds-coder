@@ -136,6 +136,119 @@ var loadRecentCandidateEvents = function() {
 }
 
 /**
+ * Loads the relationship autocomplete listeners and add button.
+ * @returns true if successful, false otherwise.
+ */
+var loadRelationshipListeners = function() {
+  // initialize the relationship listeners
+  for (var i = 1; i < 4; i++) {
+    $("#relationship-key-" + i).autocomplete({
+      minlength: 2,
+      classes: {
+        "ui-autocomplete": "ui-autocomplete-adj"
+      },
+      source: function(request, response) {
+        $.ajax({
+          url: $SCRIPT_ROOT + '/search_canonical_events',
+          dataType: "json",
+          method: "post",
+          data: {
+            term: request.term
+          },
+          success: function(data) {
+            if(data.length == 0) {
+              data = ["No results round."];
+            }
+            response(data['result']['data']);
+          }
+        });
+      }
+    })
+  }
+
+  // initialize the add relationship button
+  $('#add-relationship-button').click(function() {
+    var req = $.ajax({
+      url: $SCRIPT_ROOT + '/add_canonical_relationship',    
+      method: "POST",
+      data: {
+        key1: $('#relationship-key-1').val(),
+        key2: $('#relationship-key-2').val(),
+        type: $('#relationship-type').val()
+      }
+    })
+    .done(function() {
+      return makeSuccess("Relationship added.");
+    })
+    .fail(function() { return makeError(req.responseText); });
+  });
+
+  // view hierarchy button
+  $('#view-hierarchy-button').click(function() {
+    var req = $.ajax({
+      url: $SCRIPT_ROOT + '/load_canonical_hierarchy',
+      method: "POST",
+      data: {
+        key: $('#relationship-key-3').val()
+      }
+    })
+    .done(function() {
+      $('#view-hierarchy').html(req.responseText);
+
+      // add the grid listeners to the hierarchy view
+      $('.hierarchy-wrapper .glyphicon-export').click(function() {
+        var canonical_event_key = $(this).parent().attr('data-key');
+        loadGrid(canonical_event_key, getCandidates());
+      });
+
+      // add delete listeners to the hierarchy view
+      $('.hierarchy-parent .glyphicon-trash').click(function(e) {
+        r = confirm("Are you sure you want to delete this relationship?");
+        if (r == true) {
+          var parent_div = $(this).closest('.hierarchy-parent');
+          var req = $.ajax({
+            url: $SCRIPT_ROOT + '/delete_canonical_relationship',
+            method: "POST",
+            data: {
+              id1: $(this).closest('.hierarchy-wrapper').attr('data-id'),
+              id2: parent_div.attr('data-id'),
+              type: parent_div.attr('data-type')
+            }
+          })
+          .done(function() {
+            parent_div.remove();
+            return makeSuccess("Relationship deleted.");
+          })
+          .fail(function() { return makeError(req.responseText); });
+        }
+      });
+
+      $('.hierarchy-child .glyphicon-trash').click(function(e) {
+        r = confirm("Are you sure you want to delete this relationship?");
+        if (r == true) {
+          var child_div = $(this).closest('.hierarchy-child');
+          var req = $.ajax({
+            url: $SCRIPT_ROOT + '/delete_canonical_relationship',
+            method: "POST",
+            data: {
+              id1: child_div.attr('data-id'),
+              id2: $(this).closest('.hierarchy-wrapper').attr('data-id'),
+              type: child_div.attr('data-type')
+            }
+          })
+          .done(function() {
+            child_div.remove();
+            return makeSuccess("Relationship deleted.");
+          })
+          .fail(function() { return makeError(req.responseText); });
+        }
+      });
+    })
+  .fail(function() { return makeError(req.responseText); });
+  });
+}
+
+/**
  * Loads the search results for the given query from the existing forms.
  * @returns true if successful, false otherwise.
  */
@@ -880,5 +993,6 @@ $(function () {
       search_params.get('cand_events')
     );
     loadRecentCandidateEvents();
-    loadRecentCanonicalEvents();    
+    loadRecentCanonicalEvents();
+    loadRelationshipListeners();
 });
