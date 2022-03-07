@@ -1,41 +1,66 @@
 <div class="hierarchy-wrapper" data-key="{{ key }}" data-id="{{ cid }}">
-    <div class="sub">
-        <b>parents:</b> 
-        {% if parents %}
+    {% if parents %}
+    <div class="row bg-light">
+        <div class="col-sm-10">
             <div class="sub">
-            {% for parent, relationship in parents %}
-                <div class="hierarchy-parent" 
-                    data-id="{{ parent.id }}" 
-                    data-key="{{ parent.key }}"
-                    data-type="{{ relationship.relationship_type }}">
-                    {{ parent.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
-                    <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a>
-                    <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
+                    <div>
+                    {% for parent, relationship in parents %}
+                        <div class="hierarchy-parent" 
+                            data-id="{{ parent.id }}" 
+                            data-key="{{ parent.key }}"
+                            data-type="{{ relationship.relationship_type }}">
+                            {{ parent.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
+                            <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a>
+                            <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
+                        </div>
+                    {% endfor %}
+                    </div> 
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <b>parents</b>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row bg-warning current">
+        <div class="col-sm-10">
+            <div class="sub">
+                <div class="sub">
+                    {{ key }}
                 </div>
-            {% endfor %}
-            </div> 
-        {% else %}
-            <span class="text-muted">(none)</span>
-        {% endif %}
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <b>current</b>
+        </div>
     </div>
 
-    <div class="sub">
-        <b>children:</b> 
-        {% if children %}
+    {% if children %}
+    <div class="row bg-light">
+        <div class="col-sm-10">
             <div class="sub">
-            {% for child, relationship in children %}
-                <div class="hierarchy-child" 
-                    data-id="{{ child.id }}"
-                    data-key="{{ child.key }}"
-                    data-type="{{ relationship.relationship_type }}">
-                    {{ child.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
-                    <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a> 
-                    <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
-                </div> 
-            {% endfor %}
+                <div class="sub">
+                    <div class="sub">
+                            <div>
+                            {% for child, relationship in children %}
+                                <div class="hierarchy-child" 
+                                    data-id="{{ child.id }}"
+                                    data-key="{{ child.key }}"
+                                    data-type="{{ relationship.relationship_type }}">
+                                    {{ child.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
+                                    <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a> 
+                                    <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
+                                </div> 
+                            {% endfor %}
+                            </div>
+                    </div>
+                </div>
             </div>
-        {% else %}
-            <span class="text-muted">(none)</span>
-        {% endif %}
+        </div>
+        <div class="col-sm-2">
+            <b>children</b>
+        </div>
     </div>
+    {% endif %}
 </div>

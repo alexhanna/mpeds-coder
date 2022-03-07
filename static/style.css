@@ -45,6 +45,10 @@ label, select, option, input {
 	background-color: #008C48;
 }
 
+.bg-light {
+	background-color: #F8F9FA;
+}
+
 .hl-1 {
 	background-color: #CCF5FF;
 }
@@ -521,6 +525,10 @@ div#view-hierarchy {
 div#view-hierarchy .sub {
 	display: block;
 	margin-left: 10px;
+}
+
+div#view-hierarchy .current {
+	padding: 4px 0;
 }
 
 .hierarchy-parent,
