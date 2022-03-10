@@ -87,14 +87,30 @@ df_long['value'] = df_long.apply(lambda x: x['text'] if x['text'] is not None el
 
 ## pivot
 columns = ['article-desc', 'desc', 'location', 'start-date'] 
-indexes = ['event_id', 'coder_id', 'article_id', 'publication', 'pub_date', 'title', 'form', 'issue', 'racial_issue']
-df_wide = df_long[df_long['variable'].isin(columns)].\
-    pivot(index = indexes, columns = 'variable', values = 'value')
+df_int = df_long[df_long['variable'].isin(columns)]
+
+df_int = df_int.drop_duplicates(['event_id', 'variable'])
+
+df_int[['event_id', 'variable', 'value']].pivot(index = 'event_id', 
+    columns = 'variable', values = 'value')
+
+indexes = ['event_id', 'coder_id', 'article_id', 'publication', 'pub_date', 
+    'title', 'form', 'issue', 'racial_issue']
+
+## pivot on descs
+df_wide1 = df_int.pivot(index = 'event_id', columns = 'variable', values = 'value')
+
+## subset the stable columns
+df_wide2 = df_long[indexes].drop_duplicates()
+
+## join
+df_wide = df_wide1.join(df_wide2)
 
 ## rename a few things to be MySQL and SQLAlchemy friendly
 df_wide = df_wide.rename(columns = {'article-desc': 'article_desc', 'start-date': 'start_date'})
 
 ## reset indexes 
+del df_wide['event_id']
 df_wide = df_wide.reset_index()
 
 ## replace empty values with NaN
