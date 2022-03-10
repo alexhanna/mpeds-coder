@@ -101,16 +101,14 @@ indexes = ['event_id', 'coder_id', 'article_id', 'publication', 'pub_date',
 df_wide1 = df_int.pivot(index = 'event_id', columns = 'variable', values = 'value')
 
 ## subset the stable columns
-df_wide2 = df_long[indexes].drop_duplicates()
+df_wide2 = df_long[indexes].drop_duplicates().set_index('event_id')
 
 ## join
-df_wide = df_wide1.join(df_wide2)
+df_wide = df_wide1.merge(df_wide2, left_index = True, right_index = True)
 
 ## rename a few things to be MySQL and SQLAlchemy friendly
 df_wide = df_wide.rename(columns = {'article-desc': 'article_desc', 'start-date': 'start_date'})
 
-## reset indexes 
-del df_wide['event_id']
 df_wide = df_wide.reset_index()
 
 ## replace empty values with NaN
