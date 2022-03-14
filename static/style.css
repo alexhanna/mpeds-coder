@@ -551,3 +551,7 @@ ul.ui-autocomplete-adj li {
 ul.ui-autocomplete-adj li:hover {
 	background-color: #CCC;
 }
+
+.ui-helper-hidden-accessible {
+	display:none;
+}
