@@ -1,4 +1,7 @@
 
+// Globals
+var MAX_CAND_EVENTS = 4;
+
 /**
  * 
  * @param {*} e - Event
@@ -497,38 +500,48 @@ var collapseDesc = function(e, variable) {
 }
 
 /**
+ * Update the grid with a candidate event.
+ * Gets the current params from URL and replaces the last event.
+ * @param {str} event_id - event id to add to the grid.
+ * 
+ * @returns {bool} - true if successful, false otherwise.
+ */
+var updateGridWithCandidateEvent = function(event_id) {
+  var search_params = new URLSearchParams(window.location.search);
+  var cand_events = search_params.get('cand_events').split(',');  
+
+  // remove last event from the list if full
+  if (cand_events.includes(event_id)) {
+    return makeError("Event already in grid.");
+  } else if (cand_events.length == MAX_CAND_EVENTS) {
+    cand_events.pop();
+  } else if (cand_events.length == 1 & (cand_events[0] == 'null' | cand_events[0] == '')) {
+    // remove the null keyword
+    cand_events = [];
+  } 
+
+  // add this event to the list
+  cand_events.push(event_id);
+
+  return loadGrid(
+    canonical_event_key = search_params.get('canonical_event_key'),
+    cand_events_str = cand_events.join(',')
+  );
+}
+
+/**
  * Initialize listeners for search pane.
  * Will need to perform this on every reload of the search pane.
  * 
  */
 var initializeSearchListeners = function() {
-  var MAX_CAND_EVENTS = 4;
-
   // listeners for current search results
   $('.cand-makeactive').click(function(e) {
     e.preventDefault();
-
-    var search_params = new URLSearchParams(window.location.search);
-
     var event_desc = $(e.target).closest('.event-desc');
     var event_id = event_desc.attr('data-event');
-    var cand_events = search_params.get('cand_events').split(',');  
 
-    // remove last event from the list if full
-    if (cand_events.length == MAX_CAND_EVENTS) {
-      cand_events.pop();
-    } else if (cand_events.length == 1 & (cand_events[0] == 'null' | cand_events[0] == '')) {
-      // remove the null keyword
-      cand_events = [];
-    }
-
-    // add this event to the list
-    cand_events.push(event_id);
-
-    let success = loadGrid(
-      canonical_event_key = search_params.get('canonical_event_key'),
-      cand_events_str = cand_events.join(',')
-    );
+    let success = updateGridWithCandidateEvent(event_id);
 
     if (success) {
       markGridEvents(cand_events);
@@ -561,6 +574,17 @@ var initializeCanonicalSearchListeners = function() {
     if (success) {
       markCanonicalGridEvent(event_desc);
       loadRecentCanonicalEvents();
+    }
+  });
+
+  $('.canonical-cand-makeactive').click(function (e) {
+    e.preventDefault()
+
+    var event_id = $(e.target).attr('data-event');
+    let success = updateGridWithCandidateEvent(event_id);
+
+    if (success) {
+      loadRecentCandidateEvents();
     }
   });
 }

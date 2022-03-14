@@ -868,10 +868,27 @@ def search_canonical():
     )
 
     ## search for the canonical event in key and notes
-    rs = db_session.query(CanonicalEvent).filter(filter_expr).all()
+    events = db_session.query(CanonicalEvent).filter(filter_expr).all()
+
+    ## get the candidate events associated with each canonical event
+    rs = db_session.query(CanonicalEvent, EventMetadata).\
+        join(CodeEventCreator, CodeEventCreator.event_id == EventMetadata.event_id).\
+        join(CanonicalEventLink, CanonicalEventLink.cec_id == CodeEventCreator.id).\
+        join(CanonicalEvent, CanonicalEvent.id == CanonicalEventLink.canonical_id).\
+        filter(
+            CanonicalEvent.id.in_([x.id for x in events]), 
+            CodeEventCreator.variable != 'link' ## TODO: Should we exclude links?
+        ).all()
+
+    cand_events = {}
+    for ce, em in rs:
+        if ce.id not in cand_events:
+            cand_events[ce.id] = {}
+        cand_events[ce.id][em.event_id] = em
 
     return render_template('adj-canonical-search-block.html', 
-        events = rs,
+        events = events,
+        cand_events = cand_events,
         is_search = True)
 
 

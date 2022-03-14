@@ -38,5 +38,22 @@
             <b>notes:</b> {{ e.notes | safe }}
         </div>
     </div>
+    {% if cand_events %}
+    <div class="row">
+        <div class="col-sm-12"><b>cand events:</b> <br />
+            {% for event_id in cand_events[e.id].keys() %}
+                {{event_id}}
+                <a class="glyphicon canonical-cand-makeactive glyphicon-export" 
+                    data-event="{{ event_id }}" 
+                    title="Add to grid" href="#"></a> 
+                <a class="glyphicon glyphicon-info-sign" 
+                    title="{{ cand_events[e.id][event_id].desc }}" href="#"></a>:
+                {{ cand_events[e.id][event_id].desc[0:75] }}
+                    {{ '...' if cand_events[e.id][event_id].desc | length > 75 else '' }} 
+                <br/>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endfor %}
