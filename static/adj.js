@@ -133,6 +133,7 @@ var loadRecentCandidateEvents = function() {
   })
   .done(function() {
     $('#canonical-recent-search-block').html(req.responseText);
+    initializeCanonicalSearchListeners();
     return true;
   })
   .fail(function() { return makeError(req.responseText); });
@@ -355,10 +356,11 @@ var toggleFlag = function(e, operation, flag) {
       to_exclude = column.attr('data-event');
     }
 
-    return loadGrid(
+    loadGrid(
       canonical_event_key = $('div.canonical-event-metadata').attr('data-key'),
       cand_event_str = getCandidates(to_exclude)
     );
+    loadSearch();
   })
   .fail(function() { return makeError(req.responseText); });
 }
@@ -664,10 +666,14 @@ var initializeGridListeners = function() {
   });
 
   // add completed flag to candidate event
-  $('.add-completed').click(function(e) { toggleFlag(e, 'add', 'completed'); });
+  $('.add-completed').click(function(e) { 
+    toggleFlag(e, 'add', 'completed');
+  });
 
   // add further review flag to candidate event
-  $('.add-flag').click(function(e) { toggleFlag(e, 'add', 'for-review');  });
+  $('.add-flag').click(function(e) { 
+    toggleFlag(e, 'add', 'for-review');
+  });
 
   // add value to a new dummy event
   $('.add-dummy').click(function(e) {
@@ -829,10 +835,14 @@ var initializeGridListeners = function() {
   });
 
   // Remove completed
-  $('.remove-completed').click(function(e) { toggleFlag(e, 'del', 'completed') });
+  $('.remove-completed').click(function(e) { 
+    toggleFlag(e, 'del', 'completed');
+  });
 
   // Remove flag
-  $('.remove-flag').click(function(e) { toggleFlag(e, 'del', 'for-review') });
+  $('.remove-flag').click(function(e) { 
+    toggleFlag(e, 'del', 'for-review');
+  });
 
   // Remove canonical event from grid
   $('div.canonical-event-metadata a.glyphicon-remove-sign').click(function () {
