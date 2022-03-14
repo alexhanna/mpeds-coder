@@ -394,6 +394,7 @@ var updateModal = function (variable, mode) {
       canonical_event_key = reload_key,
       cand_events_str = getCandidates()
     );
+    loadRecentCanonicalEvents();
   })
   .fail(function() {
     $("#modal-flash").text(req.responseText);
@@ -742,7 +743,7 @@ var initializeGridListeners = function() {
 
         // remove from the database via Ajax call
         var req = $.ajax({
-          url: $SCRIPT_ROOT + '/del_canonical_event',
+          url: $SCRIPT_ROOT + '/delete_canonical',
           type: "POST",
           data: {
             key: canonical_event_key
@@ -752,6 +753,7 @@ var initializeGridListeners = function() {
           $('#modal-container').modal('hide');
 
           loadGrid('', getCandidates());
+          loadRecentCanonicalEvents(); 
           return makeSuccess(req.responseText);
         })
         .fail(function() { return makeError(req.responseText); });

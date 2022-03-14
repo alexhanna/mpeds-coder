@@ -1083,9 +1083,9 @@ def add_event_flag():
     return make_response("Flag created.", 200)
 
 
-@app.route('/del_canonical_event', methods = ['POST'])
+@app.route('/delete_canonical', methods = ['POST'])
 @login_required
-def del_canonical_event():
+def delete_canonical():
     """ Deletes the canonical event and related CEC links from the database."""
     key = request.form['key']
 
