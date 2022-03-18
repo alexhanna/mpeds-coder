@@ -654,10 +654,10 @@ def load_adj_grid():
 @login_required
 def load_recent_candidate_events():
     """ Load and render most recent candidate events. """
-    events = [x[0] for x in db_session.query(EventMetadata, RecentEvent).\
-        join(EventMetadata, EventMetadata.event_id == RecentEvent.event_id).\
-        filter(RecentEvent.coder_id == current_user.id).\
-        order_by(desc(RecentEvent.last_accessed)).limit(5).all()]
+    events = [x[0] for x in db_session.query(EventMetadata, RecentEvent)\
+        .join(EventMetadata, EventMetadata.event_id == RecentEvent.event_id)\
+        .filter(RecentEvent.coder_id == current_user.id)\
+        .order_by(desc(RecentEvent.last_accessed)).limit(5).all()]
 
     return render_template('adj-search-block.html', events = events, flags = [])
 
@@ -666,13 +666,16 @@ def load_recent_candidate_events():
 @login_required
 def load_recent_canonical_events():
     """ Load and render most recent canonical events. """
-    events = db_session.query(CanonicalEvent).\
-        join(RecentCanonicalEvent, CanonicalEvent.id == RecentCanonicalEvent.canonical_id).\
-        filter(RecentCanonicalEvent.coder_id == current_user.id).\
-        order_by(desc(RecentCanonicalEvent.last_accessed)).limit(5).all()
+    events = db_session.query(CanonicalEvent)\
+        .join(RecentCanonicalEvent, CanonicalEvent.id == RecentCanonicalEvent.canonical_id)\
+        .filter(RecentCanonicalEvent.coder_id == current_user.id)\
+        .order_by(desc(RecentCanonicalEvent.last_accessed)).limit(5).all()
+
+    users = {x.id: x.username for x in  db_session.query(User).all()}
 
     return render_template('adj-canonical-search-block.html', 
         events = events, 
+        users = users,
         is_search = False)
 
 
@@ -838,10 +841,10 @@ def do_search():
     return response
 
 
-@app.route('/search_canonical_events', methods=['POST'])
+@app.route('/search_canonical_autocomplete', methods=['POST'])
 @login_required
 def search_canonical_events():
-    """Returns a list of canonical event keys based on search term."""
+    """Returns a list of canonical event keys based on search term for the autocomplete."""
     term = request.form['term']
 
     ## search for the canonical event in key 
@@ -854,7 +857,7 @@ def search_canonical_events():
 @app.route('/search_canonical', methods = ['POST'])
 @login_required
 def search_canonical():
-    """Loads a set of canonical events which meet search criteria."""
+    """Loads a set of canonical events which meet search criteria, plus their related candidate events."""
     canonical_search_term = request.form['canonical_search_term']
 
     if canonical_search_term == '':
@@ -869,15 +872,16 @@ def search_canonical():
 
     ## search for the canonical event in key and notes
     events = db_session.query(CanonicalEvent).filter(filter_expr).all()
+    users = {x.id: x.username for x in  db_session.query(User).all()}
 
     ## get the candidate events associated with each canonical event
-    rs = db_session.query(CanonicalEvent, EventMetadata).\
-        join(CodeEventCreator, CodeEventCreator.event_id == EventMetadata.event_id).\
-        join(CanonicalEventLink, CanonicalEventLink.cec_id == CodeEventCreator.id).\
-        join(CanonicalEvent, CanonicalEvent.id == CanonicalEventLink.canonical_id).\
-        filter(
+    rs = db_session.query(CanonicalEvent, EventMetadata)\
+        .join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id)\
+        .join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id)\
+        .join(EventMetadata, EventMetadata.event_id == CodeEventCreator.event_id)\
+        .filter(
             CanonicalEvent.id.in_([x.id for x in events]), 
-            CodeEventCreator.variable != 'link' ## TODO: Should we exclude links?
+            CodeEventCreator.variable != 'link' ## TODO: Should we exclude links
         ).all()
 
     cand_events = {}
@@ -889,6 +893,7 @@ def search_canonical():
     return render_template('adj-canonical-search-block.html', 
         events = events,
         cand_events = cand_events,
+        users = users,
         is_search = True)
 
 

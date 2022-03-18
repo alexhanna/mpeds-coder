@@ -153,7 +153,7 @@ var loadRelationshipListeners = function() {
       },
       source: function(request, response) {
         $.ajax({
-          url: $SCRIPT_ROOT + '/search_canonical_events',
+          url: $SCRIPT_ROOT + '/search_canonical_autocomplete',
           dataType: "json",
           method: "post",
           data: {
