@@ -969,13 +969,15 @@ $(function () {
       e.preventDefault();
       // Get the canonical event key from the search box
       var canonical_search_term = $('#canonical-search-term').val();
+      var canonical_search_eventid = $('#canonical-search-eventid').val();
 
       // Get the candidates from the database
       var req = $.ajax({
         url: $SCRIPT_ROOT + '/search_canonical',
         type: "POST",
         data: {
-          canonical_search_term: canonical_search_term
+          canonical_search_term: canonical_search_term,
+          canonical_search_eventid: canonical_search_eventid
         },
         beforeSend: function () {
           $('.flash').removeClass('alert-danger');

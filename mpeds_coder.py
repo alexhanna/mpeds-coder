@@ -859,20 +859,34 @@ def search_canonical_events():
 def search_canonical():
     """Loads a set of canonical events which meet search criteria, plus their related candidate events."""
     canonical_search_term = request.form['canonical_search_term']
+    canonical_search_eventid = request.form['canonical_search_eventid']
 
-    if canonical_search_term == '':
-        return make_response("Please enter a search term.", 400)
+    if canonical_search_term == '' and canonical_search_eventid == '':
+        return make_response("Please enter a search term or event ID.", 400)
+    elif canonical_search_term != '' and canonical_search_eventid != '':
+        return make_response("Please enter only a search term or event ID.", 400)
 
-    ## Construct search in all available fields
-    filter_expr = or_(
-        CanonicalEvent.key.like(u'%{}%'.format(canonical_search_term)),
-        CanonicalEvent.description.like(u'%{}%'.format(canonical_search_term)),
-        CanonicalEvent.notes.like(u'%{}%'.format(canonical_search_term))
-    )
-
-    ## search for the canonical event in key and notes
-    events = db_session.query(CanonicalEvent).filter(filter_expr).all()
     users = {x.id: x.username for x in  db_session.query(User).all()}
+
+    if canonical_search_term != '':
+        ## Construct search in all available fields
+        filter_expr = or_(
+            CanonicalEvent.key.like(u'%{}%'.format(canonical_search_term)),
+            CanonicalEvent.description.like(u'%{}%'.format(canonical_search_term)),
+            CanonicalEvent.notes.like(u'%{}%'.format(canonical_search_term))
+        )
+
+        ## search for the canonical event in key and notes
+        events = db_session.query(CanonicalEvent).filter(filter_expr).all()
+    else:
+        ## search for the canonical event in key and notes
+        events = db_session.query(CanonicalEvent)\
+            .join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id)\
+            .join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id)\
+            .filter(
+                CodeEventCreator.event_id == canonical_search_eventid, 
+                CodeEventCreator.variable != 'link' 
+            ).all()
 
     ## get the candidate events associated with each canonical event
     rs = db_session.query(CanonicalEvent, EventMetadata)\
@@ -881,9 +895,10 @@ def search_canonical():
         .join(EventMetadata, EventMetadata.event_id == CodeEventCreator.event_id)\
         .filter(
             CanonicalEvent.id.in_([x.id for x in events]), 
-            CodeEventCreator.variable != 'link' ## TODO: Should we exclude links
+            CodeEventCreator.variable != 'link' 
         ).all()
 
+    ## create a hashtable of candidate events by canonical ID
     cand_events = {}
     for ce, em in rs:
         if ce.id not in cand_events:
