@@ -45,8 +45,16 @@ label, select, option, input {
 	background-color: #008C48;
 }
 
-.bg-light {
-	background-color: #F8F9FA;
+div.bg-light {
+	background-color: #FEFEFE;
+}
+
+div.bg-med {
+	background-color: #EFEFEF;
+}
+
+div.bg-dark {
+	background-color: #DEDEDE;
 }
 
 .hl-1 {
@@ -532,7 +540,8 @@ div#view-hierarchy .current {
 }
 
 .hierarchy-parent,
-.hierarchy-child {
+.hierarchy-child,
+.hierarchy-grandchild {
 	display: block;
 }
 

@@ -1,65 +1,64 @@
 <div class="hierarchy-wrapper" data-key="{{ key }}" data-id="{{ cid }}">
     {% if parents %}
-    <div class="row bg-light">
-        <div class="col-sm-10">
-            <div class="sub">
-                    <div>
-                    {% for parent, relationship in parents %}
-                        <div class="hierarchy-parent" 
-                            data-id="{{ parent.id }}" 
-                            data-key="{{ parent.key }}"
-                            data-type="{{ relationship.relationship_type }}">
-                            {{ parent.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
-                            <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a>
-                            <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
-                        </div>
-                    {% endfor %}
-                    </div> 
-            </div>
-        </div>
-        <div class="col-sm-2">
-            <b>parents</b>
+    <div class="row">
+        <div class="col-sm-12">
+            <div>
+            {% for parent, relationship in parents %}
+                <div class="hierarchy-parent bg-light" 
+                    data-id="{{ parent.id }}" 
+                    data-key="{{ parent.key }}"
+                    data-type="{{ relationship.relationship_type }}">
+                    {{ parent.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
+                    <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a>
+                    <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
+                </div>
+            {% endfor %}
+            </div> 
         </div>
     </div>
     {% endif %}
 
-    <div class="row bg-warning current">
-        <div class="col-sm-10">
-            <div class="sub">
-                <div class="sub">
-                    {{ key }}
-                </div>
+    <div class="row current">
+        <div class="col-sm-12">
+            <div class="{{ 'sub' if parents else '' }} bg-info">
+                {{ key }}
             </div>
-        </div>
-        <div class="col-sm-2">
-            <b>current</b>
         </div>
     </div>
 
     {% if children %}
-    <div class="row bg-light">
-        <div class="col-sm-10">
-            <div class="sub">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="{{ 'sub' if parents else '' }}">
                 <div class="sub">
-                    <div class="sub">
-                            <div>
-                            {% for child, relationship in children %}
-                                <div class="hierarchy-child" 
-                                    data-id="{{ child.id }}"
-                                    data-key="{{ child.key }}"
-                                    data-type="{{ relationship.relationship_type }}">
-                                    {{ child.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
-                                    <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a> 
-                                    <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
-                                </div> 
-                            {% endfor %}
-                            </div>
-                    </div>
+                        <div>
+                        {% for child, relationship in children %}
+                            <div class="hierarchy-child bg-med" 
+                                data-id="{{ child.id }}"
+                                data-key="{{ child.key }}"
+                                data-type="{{ relationship.relationship_type }}">
+                                {{ child.key }} <span class="text-muted">[{{ relationship.relationship_type }}]</span>
+                                <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a> 
+                                <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
+                            </div> 
+                            {% if child.id in grandchildren %}
+                                <div class="sub">
+                                    {% for grandchild, gc_relationship in grandchildren[child.id] %}
+                                        <div class="hierarchy-grandchild bg-dark" 
+                                            data-id="{{ grandchild.id }}"
+                                            data-key="{{ grandchild.key }}"
+                                            data-type="{{ gc_relationship.relationship_type }}">
+                                            {{ grandchild.key }} <span class="text-muted">[{{ gc_relationship.relationship_type }}]</span>
+                                            <a class="glyphicon glyphicon-export" title="Add to grid" href="#"></a> 
+                                            <a class="glyphicon glyphicon-trash text-danger" title="Remove relationship" href="#"></a>
+                                        </div> 
+                                    {% endfor %}
+                                </div>                                    
+                            {% endif %}
+                        {% endfor %}
+                        </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-2">
-            <b>children</b>
         </div>
     </div>
     {% endif %}

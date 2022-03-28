@@ -699,15 +699,23 @@ def load_canonical_hierarchy():
         .filter(CanonicalEventRelationship.canonical_id2 == cid)\
         .order_by(CanonicalEventRelationship.relationship_type, CanonicalEvent.key).all()            
 
-    # links = [x[0] for x in db_session.query(distinct(CodeEventCreator.event_id))\
-    #     .join(CanonicalEventLink, CanonicalEventLink.cec_id == CodeEventCreator.id)\
-    #     .filter(CanonicalEventLink.canonical_id == cid).all()]
+    gcs = db_session.query(CanonicalEvent, CanonicalEventRelationship)\
+        .join(CanonicalEventRelationship, CanonicalEvent.id == CanonicalEventRelationship.canonical_id1)\
+        .filter(CanonicalEventRelationship.canonical_id2.in_([x[0].id for x in children])).all()
+
+    ## index GCs by parents
+    grandchildren = {}
+    for ce, cer in gcs:
+        if cer.canonical_id2 not in grandchildren:
+            grandchildren[cer.canonical_id2] = [] 
+        grandchildren[cer.canonical_id2].append((ce, cer))
 
     return render_template('adj-canonical-hierarchy.html',
         key = key,
         cid = cid,
         parents = parents, 
-        children = children)
+        children = children,
+        grandchildren = grandchildren)
 
 #####
 ## Search functions
