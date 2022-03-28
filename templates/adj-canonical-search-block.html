@@ -16,20 +16,15 @@
                     value="{{ e.id }}" />
                 </form>
             {% endif %}
-            <b>key:</b> {{ e.key }}
+            <b>key:</b> {{ e.key }} <br/>
+            <b>coder:</b> {{ users[e.coder_id] }} <br/>
+            <b>last updated:</b> {{ e.last_updated }} 
         </div>
         <div class="col-sm-3">
             <a href="#" class="canonical-makeactive">
                 <b>Add to grid <span class="glyphicon glyphicon-export"></span></b>
             </a>
             <b class="canonical-isactive text-muted" style="display:none;">In the grid</b>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <b>canonical_id:</b> {{ e.id }}<br/>
-            <b>coder:</b> {{ users[e.coder_id] }} <br/>
-            <b>last updated:</b> {{ e.last_updated }} 
         </div>
     </div>
     <div class="row">
