@@ -753,9 +753,9 @@ def do_search():
                 _filter = getattr(getattr(_model, filter_field), '__ge__')(filter_value)
             elif filter_compare == 'contains':
                 _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}%'.format(filter_value))
-            elif filter_compare == 'startswith':
+            elif filter_compare == 'starts':
                 _filter = getattr(getattr(_model, filter_field), 'like')(u'{}%'.format(filter_value))
-            elif filter_compare == 'endswith':
+            elif filter_compare == 'ends':
                 _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}'.format(filter_value))
             else:
                 raise Exception('Invalid filter compare: {}'.format(filter_compare))
