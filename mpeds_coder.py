@@ -1245,10 +1245,12 @@ def download_canonical(event_ids):
     ## order of presenting
     df_order = ['coder', 'description', 'notes']
 
-    ## remove any columns not in the dataframe
+    ## add in columns which are not in the dataframe
     for k in [k[0] for k in adj_grid_order]:
-        if k in df.columns:
-            df_order.append(k)
+        if k not in df.columns:
+            df[k] = pd.Series()
+
+        df_order.append(k)
 
     ## reorder the columns
     df = df[df_order]
