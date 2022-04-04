@@ -116,13 +116,19 @@ df_wide[df_wide == ''] = np.nan
 
 ## subset the relevant decision articles and remove from wide
 df_wide_decisions = df_wide[df_wide.article_id.isin(df_decisions.article_id)]
+
+## get the UR/PA articles
+df_wide_urpa = df_wide[df_wide.article_id.isin(df_decisions.article_id) & \
+    (df_wide.coder_id.str.startswith('UR_') | df_wide.coder_id.str.startswith('PA_'))]
+
+## remove all other entries by article ID
 df_wide = df_wide[~df_wide.article_id.isin(df_decisions.article_id)]
 
 ## inner join and readd into df_wide
 ## NB: there is a small delta here due to some of the decision'd articles being already
 ##     excluded as they contain disqualifying information.
-df_toadd = df_wide_decisions.merge(df_decisions, on = ['article_id', 'event_id'], how = 'inner')
-df_wide  = df_wide.append(df_toadd)
+df_wide = df_wide.append(df_wide_decisions.merge(df_decisions, on = ['article_id', 'event_id'], how = 'inner'))
+df_wide = df_wide.append(df_wide_urpa)
 
 ## upload to MySQL
 df_wide.to_sql(name = 'event_metadata',
