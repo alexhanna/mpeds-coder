@@ -78,6 +78,9 @@ df_long = df_long.drop_duplicates()
 ## remove skip users
 df_long = df_long[~df_long['coder_id'].isin(skip_users)]
 
+## remove training and adj users
+df_long = df_long[~(df_long['coder_id'].str.startswith('training_') | df_long['coder_id'].str.startswith('adj_'))]
+
 ## get disqualified events and remove
 disqualified_events = df_long[df_long['variable'].isin(disqualifying_variables)].event_id.unique()
 df_long = df_long[~df_long['event_id'].isin(disqualified_events)]
