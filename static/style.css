@@ -493,7 +493,8 @@ div.canonical-dummy {
 }
 
 .data-buttons {
-	float: right;
+	float: left;
+	padding-right: 2px;
 }
 
 div.expanded-event-variable-group {
