@@ -1108,6 +1108,12 @@ def add_event_flag():
     event_id = int(request.form['event_id'])
     flag = request.form['flag']
 
+    ## if we're adding a completed flag, remove all the other flags first
+    if flag == 'completed':
+        rs = db_session.query(EventFlag).filter(EventFlag.event_id == event_id).all()
+        db_session.delete(rs)
+        db_session.commit()
+
     db_session.add(EventFlag(current_user.id, event_id, flag))
     db_session.commit()
 
@@ -1199,11 +1205,8 @@ def del_event_flag():
     """Deletes a flag to a candidate event."""
     event_id = int(request.form['event_id'])
 
-    efs = db_session.query(EventFlag).\
-        filter(
-            EventFlag.coder_id == current_user.id, 
-            EventFlag.event_id == event_id
-        ).all()
+    ## delete flag, regardless of the user who put it there.
+    efs = db_session.query(EventFlag).filter(EventFlag.event_id == event_id).all()
 
     for ef in efs:
         db_session.delete(ef)
