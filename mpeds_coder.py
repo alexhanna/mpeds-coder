@@ -1111,7 +1111,8 @@ def add_event_flag():
     ## if we're adding a completed flag, remove all the other flags first
     if flag == 'completed':
         rs = db_session.query(EventFlag).filter(EventFlag.event_id == event_id).all()
-        db_session.delete(rs)
+        for r in rs:
+            db_session.delete(r)
         db_session.commit()
 
     db_session.add(EventFlag(current_user.id, event_id, flag))
