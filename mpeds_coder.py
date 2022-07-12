@@ -1300,11 +1300,6 @@ def modal_edit(variable, mode):
             ## update key + notes upon edit
             ce = db_session.query(CanonicalEvent).filter(CanonicalEvent.id == ce_id).first()
 
-            ## check if the key exists
-            q = db_session.query(CanonicalEvent).filter(CanonicalEvent.key == key).all()
-            if len(q) > 0: 
-                return make_response("Key already exists.", 400)                
-
             ce.key = key
             ce.description = desc
             ce.notes = notes
