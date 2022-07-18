@@ -301,6 +301,18 @@ var loadRelationshipListeners = function() {
   .fail(function() { return makeError(req.responseText); });
 }
 
+/**
+ * Prevents the user from submitting the form by pressing enter.
+ * @param event The keypress event.
+ * @returns true if the keypress was handled, false otherwise.
+ */
+var preventEnter = function(e) {
+  var keyCode = e.keyCode || e.which;
+  if (keyCode == 13) {
+    e.preventDefault();
+    return false;
+  }
+}
 
 /**
  * Removes the block from the canonical record.
@@ -735,6 +747,11 @@ var initializeGridListeners = function() {
       $('#modal-container .modal-content').html(req.responseText);
       $('#modal-container').modal('show');
 
+      // prevent pressing enter on the key from submitting the form
+      $('#canonical-event-key').on('keyup keypress', function(e) {
+        preventEnter(e)
+      });
+
       $('#modal-submit').click(function(e) { 
         e.preventDefault(); 
         updateModal('canonical', 'edit'); 
@@ -906,6 +923,12 @@ $(function () {
       .done(function() {
         $('#modal-container .modal-content').html(req.responseText);
         $('#modal-container').modal('show');
+
+        // prevent pressing enter on the key from submitting the form
+        $('#canonical-event-key').on('keyup keypress', function(e) {
+          preventEnter(e)
+        });
+
         $('#modal-submit').click(function(e) {
           e.preventDefault(); 
           updateModal('canonical', 'add');
