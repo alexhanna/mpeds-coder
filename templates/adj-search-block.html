@@ -1,12 +1,12 @@
 <div class="event-group">
     {% for e in events %}
-    {% if flags[e.event_id] == 'for-review' %}
-        {%- set event_class = 'bg-danger' %}
-    {% elif flags[e.event_id] == 'completed' %}
-        {%- set event_class = 'completed' %}
-    {% else %}
-        {%- set event_class = '' %}
-    {% endif %} 
+        {% if flags[e.event_id] == 'for-review' %}
+            {%- set event_class = 'bg-danger' %}
+        {% elif flags[e.event_id] == 'completed' %}
+            {%- set event_class = 'completed' %}
+        {% else %}
+            {%- set event_class = '' %}
+        {% endif %} 
     <div class="event-desc candidate-search {{ event_class }}" id="cand-event_{{ e.event_id }}" data-event="{{ e.event_id }}">
         <div class="row">
             <div class="col-sm-6">

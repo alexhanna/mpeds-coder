@@ -1,56 +1,59 @@
-{% for e in events %}
-<div class="event-desc canonical-search" id="canonical-event_{{ e.id }}" 
-    data-event="{{ e.id }}"
-    data-key="{{ e.key }}">
-    <div class="row">
-        <div class="col-sm-9">
-            {% if is_search %}
-                <form>
-                    <label for="canonical-event-checkbox_{{ e.id }}">
-                        <span class="glyphicon glyphicon-download"></span>
-                    </label>
-                    <input type="checkbox" 
-                    class="form-check-input export-checkbox"
-                    name="canonical-event-checkbox_{{ e.id }}" 
-                    id="canonical-event-checkbox_{{ e.id }}"
-                    value="{{ e.id }}" />
-                </form>
-            {% endif %}
-            <b>key:</b> {{ e.key }} <br/>
-            <b>coder:</b> {{ users[e.coder_id] }} <br/>
-            <b>last updated:</b> {{ e.last_updated }} 
-        </div>
-        <div class="col-sm-3">
-            <a href="#" class="canonical-makeactive">
-                <b>Add to grid <span class="glyphicon glyphicon-export"></span></b>
-            </a>
-            <b class="canonical-isactive text-muted" style="display:none;">In the grid</b>
-        </div>
+<div class="event-group">
+    <div class="form-group">
+        <button id="canonical-export-button" class="btn btn-primary btn-sm">Export</button>
     </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <b>desc:</b> {{ e.description | safe }}<br/>
-            <b>notes:</b> {{ e.notes | safe }}
-        </div>
-    </div>
-    {% if cand_events and cand_events[e.id] %}
-    <div class="row">
-        <div class="col-sm-12"><b>cand events:</b> <br />
-            {% for event_id in cand_events[e.id].keys()|sort %}
-                {{ event_id }}
-                <a class="glyphicon canonical-cand-makeactive glyphicon-export" 
-                    data-event="{{ event_id }}" 
-                    title="Add to grid" href="#"></a> 
-                {% if cand_events[e.id][event_id].desc is not none %}
-                <a class="glyphicon glyphicon-info-sign" 
-                    title="{{ cand_events[e.id][event_id].desc }}" href="#"></a>:
-                {{ cand_events[e.id][event_id].desc[0:75] }}
-                    {{ '...' if cand_events[e.id][event_id].desc | length > 75 else '' }} 
+    {% for e in events %}
+    <div class="event-desc canonical-search" id="canonical-event_{{ e.id }}" data-event="{{ e.id }}" data-key="{{ e.key }}">
+        <div class="row">
+            <div class="col-sm-9">
+                {% if is_search %}
+                    <form>
+                        <label for="canonical-event-checkbox_{{ e.id }}">
+                            <span class="glyphicon glyphicon-download"></span>
+                        </label>
+                        <input type="checkbox" 
+                        class="form-check-input export-checkbox"
+                        name="canonical-event-checkbox_{{ e.id }}" 
+                        id="canonical-event-checkbox_{{ e.id }}"
+                        value="{{ e.id }}" />
+                    </form>
                 {% endif %}
-                <br/>
-            {% endfor %}
+                <b>key:</b> {{ e.key }} <br/>
+                <b>coder:</b> {{ users[e.coder_id] }} <br/>
+                <b>last updated:</b> {{ e.last_updated }} 
+            </div>
+            <div class="col-sm-3">
+                <a href="#" class="canonical-makeactive">
+                    <b>Add to grid <span class="glyphicon glyphicon-export"></span></b>
+                </a>
+                <b class="canonical-isactive text-muted" style="display:none;">In the grid</b>
+            </div>
         </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <b>desc:</b> {{ e.description | safe }}<br/>
+                <b>notes:</b> {{ e.notes | safe }}
+            </div>
+        </div>
+        {% if cand_events and cand_events[e.id] %}
+        <div class="row">
+            <div class="col-sm-12"><b>cand events:</b> <br />
+                {% for event_id in cand_events[e.id].keys()|sort %}
+                    {{ event_id }}
+                    <a class="glyphicon canonical-cand-makeactive glyphicon-export" 
+                        data-event="{{ event_id }}" 
+                        title="Add to grid" href="#"></a> 
+                    {% if cand_events[e.id][event_id].desc is not none %}
+                    <a class="glyphicon glyphicon-info-sign" 
+                        title="{{ cand_events[e.id][event_id].desc }}" href="#"></a>:
+                    {{ cand_events[e.id][event_id].desc[0:75] }}
+                        {{ '...' if cand_events[e.id][event_id].desc | length > 75 else '' }} 
+                    {% endif %}
+                    <br/>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
+    {% endfor %}
 </div>
-{% endfor %}

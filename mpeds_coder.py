@@ -602,14 +602,31 @@ def adj():
     if current_user.authlevel < 2: 
         return redirect(url_for('index'))
 
-    ## TODO: Base this off EventMetadata for now. Eventually, we want to get rid of this.
-    filter_fields = EventMetadata.__table__.columns.keys()
-    filter_fields.remove('id')
-    filter_fields.append('flag')
+    ## Filter fields for candidate search
+    candidate_filter_fields = EventMetadata.__table__.columns.keys()
+    candidate_filter_fields.remove('id')
+    candidate_filter_fields.append('flag')
+
+    ## Filter comparators for candidate search
+    candidate_filter_compare = [
+        ('eq', 'equals'), ('ne', 'not equal to'), 
+        ('gt', 'is greater than'), ('ge', 'is greater than or equal to'),
+        ('lt', 'is less than'), ('le', 'is less than or equal to'),
+        ('contains', 'contains'), ('starts', 'starts with'), ('ends', 'ends with')
+    ]
+    
+    ## Filter fields for canonical search
+    canonical_filter_fields = ['key', 'start-date', 'location',
+    'form', 'issue', 'racial-issue',
+    'event_id', 'coder_id', 'description', 'notes']
+    canonical_filter_compare = candidate_filter_compare[:]
 
     return render_template("adj.html", 
         search_events  = [],
-        filter_fields  = filter_fields,
+        candidate_filter_fields  = candidate_filter_fields,
+        candidate_filter_compare = candidate_filter_compare,
+        canonical_filter_fields  = canonical_filter_fields, 
+        canonical_filter_compare = canonical_filter_compare,
         cand_events    = {},
         adj_grid_order = adj_grid_order,
         links          = [],
@@ -721,12 +738,17 @@ def load_canonical_hierarchy():
 ## Search functions
 #####
 
-@app.route('/do_search', methods = ['POST'])
+@app.route('/do_search/<search_mode>', methods = ['POST'])
 @login_required
-def do_search():
-    """Takes the URL params and searches the candidate events for events
-    which meet the search criteria."""
-    search_str = request.form['adj_search_input']
+def do_search(search_mode):
+    """Takes the URL params and searches events which meet the search criteria."""
+
+    if search_mode not in ['candidate', 'canonical']:
+        return make_response("Invalid search mode.", 400)
+
+    search_str = request.form[search_mode + '_search_input']
+    users = {x.id: x.username for x in db_session.query(User).all()}
+    rev_users = {v: k for k,v in users.iteritems()}
 
     ## get multiple filters and sorting
     filters = []
@@ -734,64 +756,107 @@ def do_search():
 
     ## cycle through all the filter and sort fields
     for i in range(4):
-        filter_field = request.form['adj_filter_field_{}'.format(i)]
-        filter_value = request.form['adj_filter_value_{}'.format(i)]
-        filter_compare = request.form['adj_filter_compare_{}'.format(i)]
+        filter_field = request.form[search_mode + '_filter_field_{}'.format(i)]
+        filter_value = request.form[search_mode + '_filter_value_{}'.format(i)]
+        filter_compare = request.form[search_mode + '_filter_compare_{}'.format(i)]
 
         if filter_field and filter_value and filter_compare:
-            _model = EventMetadata if filter_field != 'flag' else EventFlag
+            if search_mode == 'candidate':
+                _model = EventMetadata if filter_field != 'flag' else EventFlag
 
-            ## Translate the filter compare to a SQLAlchemy expression.
-            if filter_compare == 'eq':
-                _filter = getattr(getattr(_model, filter_field), '__eq__')(filter_value)
-            elif filter_compare == 'ne':
-                _filter = getattr(getattr(_model, filter_field), '__ne__')(filter_value)
+                ## Translate the filter compare to a SQLAlchemy expression.
+                if filter_compare == 'eq':
+                    _filter = getattr(getattr(_model, filter_field), '__eq__')(filter_value)
+                elif filter_compare == 'ne':
+                    _filter = getattr(getattr(_model, filter_field), '__ne__')(filter_value)
 
-                ## in the case where we're excluding a flag, need to OR "flag IS NULL"
-                if filter_field == 'flag':
-                    _filter2 = getattr(getattr(_model, filter_field), '__eq__')(None)
-                    _filter = or_(_filter, _filter2)
-            elif filter_compare == 'lt':
-                _filter = getattr(getattr(_model, filter_field), '__lt__')(filter_value)
-            elif filter_compare == 'le':
-                _filter = getattr(getattr(_model, filter_field), '__le__')(filter_value)
-            elif filter_compare == 'gt':
-                _filter = getattr(getattr(_model, filter_field), '__gt__')(filter_value)
-            elif filter_compare == 'ge':
-                _filter = getattr(getattr(_model, filter_field), '__ge__')(filter_value)
-            elif filter_compare == 'contains':
-                _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}%'.format(filter_value))
-            # TODO: Add when we convert this to Python 3
-            # elif filter_compare == 'not_contains': 
-            #     _filter = getattr(getattr(_model, filter_field), 'not_like')(u'%{}%'.format(filter_value))
-            elif filter_compare == 'starts':
-                _filter = getattr(getattr(_model, filter_field), 'like')(u'{}%'.format(filter_value))
-            elif filter_compare == 'ends':
-                _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}'.format(filter_value))
+                    ## in the case where we're excluding a flag, need to OR "flag IS NULL"
+                    if filter_field == 'flag':
+                        _filter2 = getattr(getattr(_model, filter_field), '__eq__')(None)
+                        _filter = or_(_filter, _filter2)
+                elif filter_compare == 'lt':
+                    _filter = getattr(getattr(_model, filter_field), '__lt__')(filter_value)
+                elif filter_compare == 'le':
+                    _filter = getattr(getattr(_model, filter_field), '__le__')(filter_value)
+                elif filter_compare == 'gt':
+                    _filter = getattr(getattr(_model, filter_field), '__gt__')(filter_value)
+                elif filter_compare == 'ge':
+                    _filter = getattr(getattr(_model, filter_field), '__ge__')(filter_value)
+                elif filter_compare == 'contains':
+                    _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}%'.format(filter_value))
+                # TODO: Add when we convert this to Python 3
+                # elif filter_compare == 'not_contains': 
+                #     _filter = getattr(getattr(_model, filter_field), 'not_like')(u'%{}%'.format(filter_value))
+                elif filter_compare == 'starts':
+                    _filter = getattr(getattr(_model, filter_field), 'like')(u'{}%'.format(filter_value))
+                elif filter_compare == 'ends':
+                    _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}'.format(filter_value))
+                else:
+                    raise Exception('Invalid filter compare: {}'.format(filter_compare))
+            elif search_mode == 'canonical':
+                _filter2 = True
+                ## need to adjust the model and field_field internally for the join that does the search below
+                if filter_field in ['start-date', 'location', 'form', 'issue', 'racial-issue', 'event_id']:
+                    _model = CodeEventCreator
+                    if filter_field == 'event_id':
+                        filter_field = 'event_id'
+                    else:  
+                        _filter2 = getattr(getattr(_model, 'variable'), '__eq__')(filter_field)
+                        filter_field = 'value'
+                elif filter_field: 
+                    ## these are variables within the CanonicalEvent object
+                    _model = CanonicalEvent
+                    if filter_field == 'coder_id':
+                        if filter_value in rev_users:
+                            filter_value = rev_users[filter_value]
+                        else:
+                            return make_response('User not found.', 400)
+
+                ## Translate the filter compare to a SQLAlchemy expression.
+                if filter_compare == 'eq':
+                    _filter = getattr(getattr(_model, filter_field), '__eq__')(filter_value)
+                elif filter_compare == 'ne':
+                    _filter = getattr(getattr(_model, filter_field), '__ne__')(filter_value)
+                elif filter_compare == 'lt':
+                    _filter = getattr(getattr(_model, filter_field), '__lt__')(filter_value)
+                elif filter_compare == 'le':
+                    _filter = getattr(getattr(_model, filter_field), '__le__')(filter_value)
+                elif filter_compare == 'gt':
+                    _filter = getattr(getattr(_model, filter_field), '__gt__')(filter_value)
+                elif filter_compare == 'ge':
+                    _filter = getattr(getattr(_model, filter_field), '__ge__')(filter_value)
+                elif filter_compare == 'contains':
+                    _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}%'.format(filter_value))
+                elif filter_compare == 'starts':
+                    _filter = getattr(getattr(_model, filter_field), 'like')(u'{}%'.format(filter_value))
+                elif filter_compare == 'ends':
+                    _filter = getattr(getattr(_model, filter_field), 'like')(u'%{}'.format(filter_value))
+                else:
+                    raise Exception('Invalid filter compare: {}'.format(filter_compare))
+
+                ## AND the two filters together  
+                _filter = and_(_filter, _filter2)
             else:
-                raise Exception('Invalid filter compare: {}'.format(filter_compare))
-
+                raise Exception('Invalid search mode: {}'.format(search_mode)) 
+            
+            ## add to list of filters
             filters.append(_filter)
 
-        sort_field = request.form['adj_sort_field_{}'.format(i)]
-        sort_order = request.form['adj_sort_order_{}'.format(i)]
+        sort_field = request.form[search_mode + '_sort_field_{}'.format(i)]
+        sort_order = request.form[search_mode + '_sort_order_{}'.format(i)]
 
-        ## Sort by the specified field.
         if sort_field and sort_order:
-            _model = EventMetadata if sort_field != 'flag' else EventFlag
+            if search_mode == 'candidate':
+                _model = EventMetadata if sort_field != 'flag' else EventFlag
 
-            _sort = getattr(getattr(_model, sort_field), sort_order)()
-            sorts.append(_sort)
+                _sort = getattr(getattr(_model, sort_field), sort_order)()
+                sorts.append(_sort)
 
     ## AND all the filters together
     filter_expr = and_(*filters)
 
     search_expr = None
     if search_str:
-        ## Get all fields that are searchable.
-        search_fields = EventMetadata.__table__.columns.keys()
-        search_fields.remove('id')
-
         ## Build the search expression. For now, it can only do an AND or OR search.
         operator = and_
         if ' AND ' in search_str:
@@ -803,17 +868,23 @@ def do_search():
         else:
             search_terms = [search_str]
 
+        _model = EventMetadata if search_mode == 'candidate' else CanonicalEvent
+
+        ## get searchable metadata
+        search_fields = _model.__table__.columns.keys()
+        search_fields.remove('id')
+
         ## Build the search by creating an expression for each search term and search field.
         search_expr = []
         for term in search_terms:
             term_expr = []
             for field in search_fields:
-                term_expr.append(getattr(getattr(EventMetadata, field), 'like')(u'%{}%'.format(term)))
+                term_expr.append(getattr(getattr(_model, field), 'like')(u'%{}%'.format(term)))
             search_expr.append(or_(*term_expr))
         search_expr = operator(*search_expr) 
 
     ## Filter out null start dates to account for disqualifying information.
-    date_filter = EventMetadata.start_date != None
+    date_filter = EventMetadata.start_date != None if search_mode == 'candidate' else True
 
     ## Combine filters.
     a_filter_expr = None
@@ -827,21 +898,58 @@ def do_search():
         return make_response("Please enter a search term or a filter.", 400)
 
     ## Perform the search on a left join to get all the candidate events.
-    search_events = db_session.query(EventMetadata).\
-        join(EventFlag, EventMetadata.event_id == EventFlag.event_id, isouter = True).\
-        filter(a_filter_expr).\
-        order_by(*sorts).all()
+    search_events = []
+    if search_mode == 'candidate':
+        search_events = db_session.query(EventMetadata).\
+            join(EventFlag, EventMetadata.event_id == EventFlag.event_id, isouter = True).\
+            filter(a_filter_expr).\
+            order_by(*sorts).all()
 
-    if len(search_events) > 1000:
-        return make_response("Too many results. Please refine your search.", 400)
+        if len(search_events) > 1000:
+            return make_response("Too many results. Please refine your search.", 400)
 
-    ## get all flags for these events
-    flags = _load_event_flags([x.event_id for x in search_events])
+        ## get all flags for these events
+        flags = _load_event_flags([x.event_id for x in search_events])
 
-    response = make_response(
-        render_template('adj-search-block.html', 
-            events = search_events,
-            flags = flags)
+        response = make_response(
+            render_template('adj-search-block.html', 
+                events = search_events,
+                flags = flags)
+            )
+    else:
+        ## do the search
+        search_events = db_session.query(CanonicalEvent).\
+            join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id).\
+            join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id).\
+            filter(a_filter_expr).\
+            order_by(*sorts).all()
+        
+        if len(search_events) > 1000:
+            return make_response("Too many results. Please refine your search.", 400)
+
+        ## get the associated candidate events
+        rs = db_session.query(CanonicalEvent, EventMetadata).\
+            join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id).\
+            join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id).\
+            join(EventMetadata, EventMetadata.event_id == CodeEventCreator.event_id).\
+            filter(
+                CanonicalEvent.id.in_([x.id for x in search_events]), 
+                CodeEventCreator.variable != 'link' 
+            ).all()
+
+        ## create a hashtable which maps canonical event keys to candidate events
+        cand_events = {}
+        for ce, em in rs:
+            if ce.id not in cand_events:
+                cand_events[ce.id] = {}
+            cand_events[ce.id][em.event_id] = em
+
+        response = make_response(
+            render_template('adj-canonical-search-block.html', 
+                events = search_events,
+                cand_events = cand_events,
+                users = users,
+                is_search = True)
         )
 
     url_params = {k: v for k, v in request.form.iteritems()}
@@ -863,95 +971,6 @@ def search_canonical_events():
 
     ## return the list of canonical event keys
     return jsonify(result={"status": 200, "data": [x.key for x in rs]})
-
-
-@app.route('/search_canonical', methods = ['POST'])
-@login_required
-def search_canonical():
-    """Loads a set of canonical events which meet search criteria, plus their related candidate events."""
-    canonical_search_term = request.form['canonical_search_term']
-    canonical_search_eventid = request.form['canonical_search_eventid']
-
-    if canonical_search_term == '' and canonical_search_eventid == '':
-        return make_response("Please enter a search term or event ID.", 400)
-    elif canonical_search_term != '' and canonical_search_eventid != '':
-        return make_response("Please enter only a search term or event ID.", 400)
-
-    users = {x.id: x.username for x in  db_session.query(User).all()}
-
-    if canonical_search_term != '':
-        ## Construct search in all available fields
-        filter_expr = or_(
-            CanonicalEvent.key.like(u'%{}%'.format(canonical_search_term)),
-            CanonicalEvent.description.like(u'%{}%'.format(canonical_search_term)),
-            CanonicalEvent.notes.like(u'%{}%'.format(canonical_search_term))
-        )
-
-        ## search for the canonical event in key and notes
-        events = db_session.query(CanonicalEvent).filter(filter_expr).all()
-    else:
-        ## search for the canonical event in key and notes
-        events = db_session.query(CanonicalEvent)\
-            .join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id)\
-            .join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id)\
-            .filter(
-                CodeEventCreator.event_id == canonical_search_eventid, 
-                CodeEventCreator.variable != 'link' 
-            ).all()
-
-    ## get the candidate events associated with each canonical event
-    rs = db_session.query(CanonicalEvent, EventMetadata)\
-        .join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id)\
-        .join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id)\
-        .join(EventMetadata, EventMetadata.event_id == CodeEventCreator.event_id)\
-        .filter(
-            CanonicalEvent.id.in_([x.id for x in events]), 
-            CodeEventCreator.variable != 'link' 
-        ).all()
-
-    ## create a hashtable of candidate events by canonical ID
-    cand_events = {}
-    for ce, em in rs:
-        if ce.id not in cand_events:
-            cand_events[ce.id] = {}
-        cand_events[ce.id][em.event_id] = em
-
-    return render_template('adj-canonical-search-block.html', 
-        events = events,
-        cand_events = cand_events,
-        users = users,
-        is_search = True)
-
-
-@app.route('/adj_search/<function>', methods = ['POST'])
-@login_required
-def adj_search(function):
-    """Adds a search/filter/sort form row to the search pane.
-       Will only do this if the prior search/filter/sort form rows are full."""
-
-    if function == 'search':
-        search_str = request.form['adj-search-input']
-        if search_str is None or search_str == '':
-            return make_response('No search string provided', 400)
-    elif function == 'filter':
-        filter_field = request.form['adj-filter-field']
-        filter_compare = request.form['adj-filter-compare']
-        filter_value = request.form['adj-filter-value']
-
-        if filter_field is None or filter_compare is None or filter_value is None:
-            return make_response('No filter provided', 400)
-    elif function == 'sort':
-        sort_field = request.form['adj-sort-field']
-        sort_order = request.form['adj-sort-order']
-
-        if sort_field is None or sort_order is None:
-            return make_response('No sort field provided', 400)
-    else:
-        return make_response("Invalid search function", 400)
-
-    is_addition = True if request.form['is_addition'] == 'true' else False
-
-    return render_template('adj-{}.html'.format(function), is_addition = is_addition)
 
 
 #####

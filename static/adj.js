@@ -116,7 +116,7 @@ var loadRecentCandidateEvents = function() {
     type: 'POST'
   })
   .done(function() {
-    $('#cand-recent_block').html(req.responseText);
+    $('#candidate-recent_block').html(req.responseText);
     return true;
   })
   .fail(function() { return makeError(req.responseText); });
@@ -256,12 +256,14 @@ var loadRelationshipListeners = function() {
  * Loads the search results for the given query from the existing forms.
  * @returns true if successful, false otherwise.
  */
- var loadSearch = function() {
+ var loadSearch = function(search_mode) {
   var req = $.ajax({
-    url: $SCRIPT_ROOT + '/do_search',
+    url: $SCRIPT_ROOT + '/do_search/' + search_mode,
     type: "POST",
     data: 
-      $('#adj_search_form, #adj_filter_form, #adj_sort_form').serialize(),
+      $('#' + search_mode + '_search_form, ' + 
+        '#' + search_mode + '_filter_form, ' + 
+        '#' + search_mode + '_sort_form').serialize(),
     beforeSend: function () {
       $('.flash').removeClass('alert-danger');
       $('.flash').addClass('alert-info');
@@ -271,14 +273,15 @@ var loadRelationshipListeners = function() {
   })
   .done(function() {
     // Update content block.
-    $('#cand-search_block').html(req.responseText); 
+    $('#' + search_mode + '-search_block').html(req.responseText); 
 
     // Update the search button text.
     n_results = req.getResponseHeader('Search-Results');
-    $('#cand-search-text').text("Search (" + n_results + " results)");
+    $('#' + search_mode + '-search-text').text("Search (" + n_results + " results)");
 
     // Update the candidate button text.
-    $('#cand_button-link').text("Candidate Events*");
+    var button_text = $('#' + search_mode + '_button-link').text();
+    $('#' + search_mode + '_button-link').text(button_text + '*');
 
     // Update the URL search params.
     let curr_search_params = new URLSearchParams(window.location.search);
@@ -372,7 +375,7 @@ var toggleFlag = function(e, operation, flag) {
       canonical_event_key = $('div.canonical-event-metadata').attr('data-key'),
       cand_event_str = getCandidates(to_exclude)
     );
-    loadSearch();
+    loadSearch('candidate');
   })
   .fail(function() { return makeError(req.responseText); });
 }
@@ -883,12 +886,11 @@ $(function () {
     });
 
     // Add listener to subtab links 
-    $(".cand-subtablinks").each(function(){
-      $(this).click(function(e) { changeTab(e, 'cand-sub'); });
-    });
-
-    $(".canonical-subtablinks").each(function(){
-      $(this).click(function(e) { changeTab(e, 'canonical-sub'); });
+    var subtabs = ['search', 'cand', 'canonical'];
+    subtabs.forEach(function(curr){
+      $('.' + curr + '-subtablinks').each(function(){
+        $(this).click(function(e) { changeTab(e, curr + '-sub'); });
+      });
     });
 
     // hide search panel
@@ -937,9 +939,9 @@ $(function () {
     });
 
     // Listener for search button.
-    $('#adj_search_button').click(function(e) { 
+    $('#candidate_search_button').click(function(e) { 
       e.preventDefault();
-      loadSearch(); 
+      loadSearch('candidate'); 
     });
 
     // Listener for clear button.
@@ -963,45 +965,16 @@ $(function () {
       });
     });
 
-    // Listener for canonical export button
-    $('#canonical-export-button').click(function(e) {
-      e.preventDefault();
-      var events = $('.export-checkbox:checked');
-
-      // make sure something is checked
-      if (typeof events !== 'undefined' && events.length > 0) {
-        var event_ids = [];
-        events.each(function() {
-          event_ids.push($(this).val());
-        });
-
-        var req = $.ajax({
-          url: $SCRIPT_ROOT + '/download_canonical/' + event_ids.join(','), 
-          type: "GET"
-        })
-        .done(function() {
-          window.location.href = $SCRIPT_ROOT + '/download_canonical/' + event_ids.join(',');
-        });
-      } else {
-        return makeError('Please select at least one event to export.');
-      }
-    });
-
     // Listener for canonical event search
-    $('#canonical-search-button').click(function(e) {
+    $('#canonical_search_button').click(function(e) {
       e.preventDefault();
-      // Get the canonical event key from the search box
-      var canonical_search_term = $('#canonical-search-term').val();
-      var canonical_search_eventid = $('#canonical-search-eventid').val();
-
       // Get the candidates from the database
       var req = $.ajax({
-        url: $SCRIPT_ROOT + '/search_canonical',
+        url: $SCRIPT_ROOT + '/do_search/canonical',
         type: "POST",
-        data: {
-          canonical_search_term: canonical_search_term,
-          canonical_search_eventid: canonical_search_eventid
-        },
+        data: $('#canonical_search_form, ' + 
+          '#canonical_filter_form, ' + 
+          '#canonical_sort_form').serialize(),
         beforeSend: function () {
           $('.flash').removeClass('alert-danger');
           $('.flash').addClass('alert-info');
@@ -1011,10 +984,43 @@ $(function () {
       })
       .done(function() {
         // Update the canonical events in the search list
-        $('#canonical-search-block').html(req.responseText);
+        $('#canonical-search_block').html(req.responseText);
+
+        // Update the search button text.
+        n_results = req.getResponseHeader('Search-Results');
+        $('#canonical-search-text').text("Search (" + n_results + " results)");
+
+        // Update the candidate button text.
+        var button_text = $('#canonical_button-link').text();
+        $('#canonical_button-link').text(button_text + '*');
 
         // Initialize the listeners for the new canonical search results
         initializeCanonicalSearchListeners();
+
+        // Listener for canonical export button
+        $('#canonical-export-button').click(function(e) {
+          e.preventDefault();
+          
+          var events = $('.export-checkbox:checked');
+
+          // make sure something is checked
+          if (typeof events !== 'undefined' && events.length > 0) {
+            var event_ids = [];
+            events.each(function() {
+              event_ids.push($(this).val());
+            });
+
+            var req = $.ajax({
+              url: $SCRIPT_ROOT + '/download_canonical/' + event_ids.join(','), 
+              type: "GET"
+            })
+            .done(function() {
+              window.location.href = $SCRIPT_ROOT + '/download_canonical/' + event_ids.join(',');
+            });
+          } else {
+            return makeError('Please select at least one event to export.');
+          }
+        });
 
         // get rid of loading flash 
         $('.flash').hide();
@@ -1024,21 +1030,24 @@ $(function () {
       .fail(function() { return makeError(req.responseText); });      
     });
 
+    // Hide canonical search to begin
+    $('#search-canonical_block').hide();
+
     // initialize the grid and search 
     let search_params = new URLSearchParams(window.location.search);
     var repeated_fields = [
-      'adj_filter_compare',
-      'adj_filter_value',
-      'adj_filter_field',
-      'adj_sort_field',
-      'adj_sort_order'
+      'filter_compare',
+      'filter_value',
+      'filter_field',
+      'sort_field',
+      'sort_order'
     ];
-    var search_ids = ['adj_search_input'];
+    var search_ids = ['candidate_search_input'];
 
     // create indexed array of search parameters
     for(var i = 0; i < 3; i++) {
       for (var j = 0; j < repeated_fields.length; j++) {
-        var field = repeated_fields[j] + '_' + i;
+        var field = 'candidate_' + repeated_fields[j] + '_' + i;
         search_ids.push(field);
       }
     }
@@ -1048,7 +1057,7 @@ $(function () {
       $('#' + search_ids[i]).val(search_params.get(search_ids[i]));
     }
 
-    loadSearch();
+    loadSearch('candidate');
     loadGrid(
       search_params.get('canonical_event_key'),      
       search_params.get('cand_events')

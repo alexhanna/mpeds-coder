@@ -2,8 +2,8 @@
 <div class="row form-row">
     <div class="col-sm-4">
         <select class="form-control"
-                name="adj_filter_field_{{ i }}" 
-                id="adj_filter_field_{{ i }}">
+                name="{{ search_mode }}_filter_field_{{ i }}" 
+                id="{{ search_mode }}_filter_field_{{ i }}">
             <option value="">---</option>
             {% for field in filter_fields %}
               <option>{{ field }}</option>
@@ -12,30 +12,23 @@
     </div>
     <div class="col-sm-4">
         <select class="form-control"
-            name="adj_filter_compare_{{ i }}"
-            id="adj_filter_compare_{{ i }}">
+            name="{{ search_mode }}_filter_compare_{{ i }}"
+            id="{{ search_mode }}_filter_compare_{{ i }}">
             <option value="">---</option>
-            <option value="eq">equals</option>
-            <option value="ne">not equal to</option>
-            <option value="gt">is greater than</option>
-            <option value="ge">is greater than or equal to</option>
-            <option value="lt">is less than</option>
-            <option value="le">is less than or equal to</option>
-            <option value="contains">contains</option>
-            <!-- <option value="not_contains">does not contain</option> -->
-            <option value="starts">starts with</option>
-            <option value="ends">ends with</option>
+            {% for k,v in filter_compare %}
+                <option value="{{ k }}">{{ v }}</option>
+            {% endfor %}
         </select>
     </div>
     <div class="col-sm-3">
         <input class="form-control"
-                name="adj_filter_value_{{ i }}"
-                id="adj_filter_value_{{ i }}" 
+                name="{{ search_mode }}_filter_value_{{ i }}"
+                id="{{ search_mode }}_filter_value_{{ i }}" 
                 type="text" 
                 placeholder = "Value..."/>
     </div>
     <div class="col-sm-1">
-        <a id="adj_filter_clear_button_{{ i }}" class="btn clear-values glyphicon glyphicon-remove" title="Clear values"></a>
+        <a id="{{ search_mode }}_filter_clear_button_{{ i }}" class="btn clear-values glyphicon glyphicon-remove" title="Clear values"></a>
     </div>
 </div>
 {% endfor %}

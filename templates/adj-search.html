@@ -1,0 +1,45 @@
+<div class="adj-variable-group">
+    <h5>{{ search_mode | title }} Search</h5>
+    <form id="{{ search_mode }}_search_form">
+        <div class="row form-row">
+            <div class="col-sm-9">
+                <input class="form-control"
+                        name="{{ search_mode }}_search_input" 
+                        id="{{ search_mode }}_search_input"
+                        type="text"
+                        {% if search_mode == 'candidate' %} 
+                            placeholder = "Example: Mizzou OR Missouri, Quebec AND students"/>
+                        {% else %}
+                            placeholder = "Example: Umbrella AND Mizzou"/>
+                        {% endif %}
+            </div>
+            <div class="col-sm-3">
+                <button id="{{ search_mode }}_search_button" class="btn btn-primary">Search</button>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="adj-variable-group">
+    <h5>Filter</h5>
+    <form id="{{ search_mode }}_filter_form">
+        {% if search_mode == 'candidate' %}
+            {% set filter_fields = candidate_filter_fields %}
+            {% set filter_compare = candidate_filter_compare %}
+        {% else %}
+            {% set filter_fields = canonical_filter_fields %}
+            {% set filter_compare = canonical_filter_compare %}
+        {% endif %}
+        {% include 'adj-filter.html' %}
+    </form>
+</div>
+<div class="adj-variable-group">
+    <h5>Sort</h5>
+    <form id="{{ search_mode }}_sort_form"> 
+        {% if search_mode == 'candidate' %}
+            {% set filter_fields = candidate_filter_fields %}
+        {% else %}
+            {% set filter_fields = canonical_filter_fields %}
+        {% endif %}
+        {% include 'adj-sort.html' %}
+    </form> 
+</div>

@@ -23,11 +23,11 @@
             <li class="tablinks active" id="search_button">
                 <a href="#">Search</a>
             </li>
-            <li class="tablinks" id="cand_button">
-                <a href="#" id="cand_button-link">Candidate Events</a>
+            <li class="tablinks" id="candidate_button">
+                <a href="#" id="candidate_button-link">Candidate Events</a>
             </li>
             <li class="tablinks" id="canonical_button">
-                <a href="#">Canonical Events</a>
+                <a href="#" id="canonical_button-link">Canonical Events</a>
             </li>
             <li class="tablinks" id="relationships_button">
                 <a href="#">Relationships</a>
@@ -35,88 +35,50 @@
         </ul>
         <div class="tab-content">
             <div class="tab-pane" id="search_block">
-                <div class="adj-variable-group">
-                    <h5>Search</h5>
-                    <form id="adj_search_form">
-                        <div class="row form-row">
-                            <div class="col-sm-9">
-                                <input class="form-control"
-                                        name="adj_search_input" 
-                                        id="adj_search_input"
-                                        type="text" 
-                                        placeholder = "Example: Mizzou OR Missouri, Quebec AND students"/>
-                            </div>
-                            <div class="col-sm-3">
-                                <button id="adj_search_button" class="btn btn-primary">Search</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="adj-variable-group">
-                    <h5>Filter</h5>
-                    <form id="adj_filter_form">
-                        {% include 'adj-filter.html' %}
-                    </form>
-                </div>
-                <div class="adj-variable-group">
-                    <h5>Sort</h5>
-                    <form id="adj_sort_form"> 
-                        {% include 'adj-sort.html' %}
-                    </form> 
-                </div>
-            </div>
-            <div class="tab-pane" id="cand_block">
                 <ul class="nav nav-pills nav-justified">
-                    <li class="cand-subtablinks active nav-item" id="cand-search_button">
-                        <a href="#" id="cand-search-text">Search</a>
+                    <li class="search-subtablinks active nav-item" id="search-candidate_button">
+                        <a href="#" id="search-candidate-text">Candidate</a>
                     </li>
-                    <li class="cand-subtablinks nav-item" id="cand-recent_button">
+                    <li class="search-subtablinks nav-item" id="search-canonical_button">
+                        <a href="#">Canonical</a>
+                    </li>
+                </ul>
+                <div class="search-subtab-pane" id="search-candidate_block">
+                    {% set search_mode = 'candidate' %}
+                    {% include 'adj-search.html' %}
+                </div>
+                <div class="search-subtab-pane" id="search-canonical_block">
+                    {% set search_mode = 'canonical' %}
+                    {% include 'adj-search.html' %}
+                </div>   
+            </div>
+            <div class="tab-pane" id="candidate_block">
+                <ul class="nav nav-pills nav-justified">
+                    <li class="cand-subtablinks active nav-item" id="candidate-search_button">
+                        <a href="#" id="candidate-search-text">Search</a>
+                    </li>
+                    <li class="cand-subtablinks nav-item" id="candidate-recent_button">
                         <a href="#">Recent</a>
                     </li>
                 </ul>
-                <div class="cand-subtab-pane" id="cand-search_block">
+                <div class="candidate-subtab-pane" id="candidate-search_block">
                     {% set events = search_events %}
                     {% include 'adj-search-block.html' %}
                 </div>
-                <div class="cand-subtab-pane" id="cand-recent_block" style="display:none;"></div>
+                <div class="candidate-subtab-pane" id="candidate-recent_block" style="display:none;"></div>
             </div>
             <div class="tab-pane" id="canonical_block">
                 <ul class="nav nav-pills nav-justified">
                     <li class="canonical-subtablinks active nav-item" id="canonical-search_button">
-                        <a href="#"">Search</a>
+                        <a href="#" id="canonical-search-text">Search</a>
                     </li>
                     <li class="canonical-subtablinks nav-item" id="canonical-recent_button">
                         <a href="#">Recent</a>
                     </li>
                 </ul>
                 <div class="canonical-subtab-pane" id="canonical-search_block">
-                    <h5>Search</h5>
-                    <div class="row">
-                        <div class="form-group col-sm-8">
-                            <input class="form-control form-control-sm" 
-                                    name="canonical-search-term" 
-                                    id="canonical-search-term"
-                                    type="text" 
-                                    placeholder="Search by key or keyword"/><br/>
-                            <input class="form-control form-control-sm" 
-                                    name="canonical-search-eventid" 
-                                    id="canonical-search-eventid"
-                                    type="text" 
-                                    placeholder="Search by candidate event ID"/>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="form-group">
-                                <button id="canonical-search-button" class="btn btn-primary btn-sm">Search</button>
-                            </div>
-                            <div class="form-group">
-                                <button id="canonical-export-button" class="btn btn-primary btn-sm">Export</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="event-group" id="canonical-search-block">
-                        {% set events = [] %}
-                        {% include 'adj-canonical-search-block.html' %}
-                    </div>                    
+                    {% set events = [] %}
+                    {% include 'adj-canonical-search-block.html' %}
                 </div>
                 <div class="canonical-subtab-pane" id="canonical-recent_block" style="display:none;">
                     <div class="event-group" id="canonical-recent-search-block"></div>
