@@ -801,7 +801,7 @@ def do_search(search_mode):
         sort_order = request.form[search_mode + '_sort_order_{}'.format(i)]
 
         if sort_field and sort_order:
-            ## TODO: THe helper function probably doesn't do what we want it to here.
+            ## TODO: THThee helper function probably doesn't do what we want it to here.
             _model, sort_field, _, _filter2 = _get_model_and_field(search_mode, sort_field, None)
 
             _sort = getattr(getattr(_model, sort_field), sort_order)()
@@ -1409,7 +1409,7 @@ def _get_model_and_field(search_mode, field, value):
     _model = None
     _field = field
     _value = value
-    _filter2 = None
+    _filter2 = True
     if search_mode == 'candidate':
         ## for candidate search, EventMetadata is the model for all the search fields, 
         ## except if we're searching for a flag
