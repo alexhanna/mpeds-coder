@@ -801,8 +801,8 @@ def do_search(search_mode):
         sort_order = request.form[search_mode + '_sort_order_{}'.format(i)]
 
         if sort_field and sort_order:
-            ## TODO: THThee helper function probably doesn't do what we want it to here.
-            _model, sort_field, _, _filter2 = _get_model_and_field(search_mode, sort_field, None)
+            ## TODO: The helper function probably doesn't do what we want it to here.
+            _model, sort_field, _, _ = _get_model_and_field(search_mode, sort_field, None)
 
             _sort = getattr(getattr(_model, sort_field), sort_order)()
             sorts.append(_sort)
@@ -839,19 +839,22 @@ def do_search(search_mode):
             search_expr.append(or_(*term_expr))
         search_expr = operator(*search_expr) 
 
-    ## Filter out null start dates to account for disqualifying information.
-    date_filter = EventMetadata.start_date != None if search_mode == 'candidate' else True
-
     ## Combine filters.
     a_filter_expr = None
-    if filter_expr is not None and search_expr is not None:
-        a_filter_expr = and_(filter_expr, search_expr, date_filter)
-    elif filter_expr is not None:
-        a_filter_expr = and_(filter_expr, date_filter)
-    elif search_expr is not None:
-        a_filter_expr = and_(search_expr, date_filter)
+    if search_mode == 'candidate':
+        ## Filter out null start dates to account for disqualifying information.
+        date_filter = EventMetadata.start_date != None
+        if filter_expr is not None and search_expr is not None:
+            a_filter_expr = and_(filter_expr, search_expr, date_filter)
+        elif filter_expr is not None:
+            a_filter_expr = and_(filter_expr, date_filter)
+        elif search_expr is not None:
+            a_filter_expr = and_(search_expr, date_filter)
+        else:
+            return make_response("Please enter a search term or a filter.", 400)
     else:
-        return make_response("Please enter a search term or a filter.", 400)
+        if len(filters) == 0 and search_expr is None:
+            return make_response("Please enter a search term or a filter.", 400)
 
     ## Perform the search on a left join to get all the candidate events.
     search_events = []
@@ -874,6 +877,9 @@ def do_search(search_mode):
             )
     else:
         search_events_ids = None
+
+        if search_str:
+            filters.append(search_expr)
 
         ## need to do the intersect between different filterings
         for _filter in filters:
