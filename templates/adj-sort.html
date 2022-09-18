@@ -5,7 +5,7 @@
                 name="{{ search_mode }}_sort_field_{{ i }}"
                 id="{{ search_mode }}_sort_field_{{ i }}">
             <option value="">---</option>
-            {% for field in filter_fields %}
+            {% for field in sort_fields %}
               <option>{{ field }}</option>
             {% endfor %}
         </select>

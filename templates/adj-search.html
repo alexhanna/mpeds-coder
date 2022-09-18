@@ -36,9 +36,9 @@
     <h5>Sort</h5>
     <form id="{{ search_mode }}_sort_form"> 
         {% if search_mode == 'candidate' %}
-            {% set filter_fields = candidate_filter_fields %}
+            {% set sort_fields = candidate_filter_fields %}
         {% else %}
-            {% set filter_fields = canonical_filter_fields %}
+            {% set sort_fields = canonical_sort_fields %}
         {% endif %}
         {% include 'adj-sort.html' %}
     </form> 

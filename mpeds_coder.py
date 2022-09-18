@@ -621,12 +621,15 @@ def adj():
     'event_id', 'coder_id', 'description', 'notes']
     canonical_filter_compare = candidate_filter_compare[:]
 
+    canonical_sort_fields = ['key', 'coder_id']
+
     return render_template("adj.html", 
         search_events  = [],
         candidate_filter_fields  = candidate_filter_fields,
         candidate_filter_compare = candidate_filter_compare,
         canonical_filter_fields  = canonical_filter_fields, 
         canonical_filter_compare = canonical_filter_compare,
+        canonical_sort_fields = canonical_sort_fields,
         cand_events    = {},
         adj_grid_order = adj_grid_order,
         links          = [],
