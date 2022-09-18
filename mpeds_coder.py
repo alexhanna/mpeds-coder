@@ -903,7 +903,7 @@ def do_search(search_mode):
             join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id).\
             join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id).\
             filter(CanonicalEvent.id.in_(search_events_ids)).\
-            order_by(CanonicalEvent.key).all()
+            order_by(*sorts).all()
         
         if len(search_events) > 1000:
             return make_response("Too many results. Please refine your search.", 400)
@@ -1434,14 +1434,15 @@ def _get_model_and_field(search_mode, field, value):
                 _filter2 = getattr(getattr(_model, 'variable'), '__eq__')(field)
 
                 ## AND cec.value = value (e.g. user-defined value)
-                _field = 'value'                
+                _field = 'value'
         else:
             _model = CanonicalEvent
             if field == 'coder_id':
-                if value in rev_users:
-                    _value = rev_users[value]
-                else:
-                    raise Exception('User not found.')
+                if value is not None:
+                    if value in rev_users:
+                        _value = rev_users[value]
+                    else:
+                        raise Exception('User not found.')
     else:
         raise Exception('Invalid search mode: {}'.format(search_mode)) 
 
