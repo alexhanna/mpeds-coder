@@ -804,7 +804,6 @@ def do_search(search_mode):
         sort_order = request.form[search_mode + '_sort_order_{}'.format(i)]
 
         if sort_field and sort_order:
-            ## TODO: The helper function probably doesn't do what we want it to here.
             _model, sort_field, _, _ = _get_model_and_field(search_mode, sort_field, None)
 
             _sort = getattr(getattr(_model, sort_field), sort_order)()
@@ -818,13 +817,13 @@ def do_search(search_mode):
         ## Build the search expression. For now, it can only do an AND or OR search.
         operator = and_
         if ' AND ' in search_str:
-            search_terms = search_str.split(' AND ')
+            search_terms = map(lambda x: x.strip(), search_str.split(' AND '))
             operator = and_
         elif ' OR ' in search_str:
-            search_terms = search_str.split(' OR ')
+            search_terms = map(lambda x: x.strip(), search_str.split(' OR '))
             operator = or_
         else:
-            search_terms = [search_str]
+            search_terms = [search_str.strip()]
 
         ## only allow the free-form search in EventMetadata and CanonicalEvent fields
         _model = EventMetadata if search_mode == 'candidate' else CanonicalEvent
@@ -887,11 +886,13 @@ def do_search(search_mode):
         ## need to do the intersect between different filterings
         for _filter in filters:
             rs = db_session.query(CanonicalEvent).\
-                join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id).\
-                join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id).\
+                join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id, isouter = True).\
+                join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id, isouter = True).\
                 filter(_filter).all()
 
             rs = set([x.id for x in rs])
+            print(search_expr, len(rs))
+
             ## if search_events is not null, then return the intersection of these two
             if search_events_ids is not None:
                 search_events_ids = search_events_ids.intersection(rs)
@@ -900,8 +901,8 @@ def do_search(search_mode):
 
         ## lastly, get the full CanonicalEvents, sorted by key
         search_events = db_session.query(CanonicalEvent).\
-            join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id).\
-            join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id).\
+            join(CanonicalEventLink, CanonicalEventLink.canonical_id == CanonicalEvent.id, isouter = True).\
+            join(CodeEventCreator, CodeEventCreator.id == CanonicalEventLink.cec_id, isouter = True).\
             filter(CanonicalEvent.id.in_(search_events_ids)).\
             order_by(*sorts).all()
         
