@@ -279,9 +279,11 @@ var loadRelationshipListeners = function() {
     n_results = req.getResponseHeader('Search-Results');
     $('#' + search_mode + '-search-text').text("Search (" + n_results + " results)");
 
-    // Update the candidate button text.
+    // Update the button text.
     var button_text = $('#' + search_mode + '_button-link').text();
-    $('#' + search_mode + '_button-link').text(button_text + '*');
+    if($('#' + search_mode + '_button-link').text().indexOf('*') < 0) {
+      $('#' + search_mode + '_button-link').text(button_text + '*');
+    }
 
     // Update the URL search params.
     let curr_search_params = new URLSearchParams(window.location.search);
@@ -990,9 +992,11 @@ $(function () {
         n_results = req.getResponseHeader('Search-Results');
         $('#canonical-search-text').text("Search (" + n_results + " results)");
 
-        // Update the candidate button text.
+        // Update the canonical button text.
         var button_text = $('#canonical_button-link').text();
-        $('#canonical_button-link').text(button_text + '*');
+        if($('#canonical_button-link').text().indexOf('*') < 0) {
+          $('#canonical_button-link').text(button_text + '*');
+        }
 
         // Initialize the listeners for the new canonical search results
         initializeCanonicalSearchListeners();
