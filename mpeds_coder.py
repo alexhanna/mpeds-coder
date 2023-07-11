@@ -1134,12 +1134,19 @@ def delete_canonical():
         .filter(CanonicalEventLink.canonical_id == ce.id).all()
     rces = db_session.query(RecentCanonicalEvent)\
         .filter(RecentCanonicalEvent.canonical_id == ce.id).all()
+    relationships = db_session.query(CanonicalEventRelationship)\
+        .filter(
+            or_(CanonicalEventRelationship.canonical_id1 == ce.id, 
+                CanonicalEventRelationship.canonical_id2 == ce.id)
+        ).all()
 
     ## remove these first to avoid FK error
     for cel in cels:
         db_session.delete(cel)
     for rce in rces:
         db_session.delete(rce)
+    for relationship in relationships:
+        db_session.delete(relationship)
     db_session.commit()
 
     ## delete the actual event
