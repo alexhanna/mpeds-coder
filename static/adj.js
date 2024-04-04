@@ -1001,6 +1001,22 @@ $(function () {
         // Initialize the listeners for the new canonical search results
         initializeCanonicalSearchListeners();
 
+        // Listener for canonical select all button
+        $('#canonical-selectall-button').click(function(e) {
+          e.preventDefault();
+          $('.export-checkbox').each(function () { 
+            $(this).prop('checked', true); 
+          });
+        });
+
+        // Listener for canonical select none button
+        $('#canonical-selectnone-button').click(function(e) {
+          e.preventDefault();
+          $('.export-checkbox').each(function () { 
+            $(this).prop('checked', false); 
+          });
+        });
+
         // Listener for canonical export button
         $('#canonical-export-button').click(function(e) {
           e.preventDefault();

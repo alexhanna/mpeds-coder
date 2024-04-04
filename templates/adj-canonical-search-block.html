@@ -1,6 +1,8 @@
 <div class="event-group">
     <div class="form-group">
         <button id="canonical-export-button" class="btn btn-primary btn-sm">Export</button>
+        <button id="canonical-selectall-button" class="btn btn-primary btn-sm">Select All</button>
+        <button id="canonical-selectnone-button" class="btn btn-primary btn-sm">Select None</button>
     </div>
     {% for e in events %}
     <div class="event-desc canonical-search" id="canonical-event_{{ e.id }}" data-event="{{ e.id }}" data-key="{{ e.key }}">
