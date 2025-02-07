@@ -54,3 +54,15 @@ SINGLE_VALUE_VARS = [
 
 ## location of templates that override defaults
 ADDITIONAL_TEMPLATE_DIR = "/var/www/misconfigured-mai_templates"
+
+class Config:
+    __conf = {
+        'MYSQL_USER': MYSQL_USER,
+        'MYSQL_PASS': MYSQL_PASS,
+        'MYSQL_DB': MYSQL_DB,
+        'MYSQL_SOCK': MYSQL_SOCK
+    }
+
+    @staticmethod
+    def get(name):
+        return Config.__conf[name]

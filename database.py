@@ -1,10 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-import config
+from .config import Config
 
 mysql_engine = create_engine('mysql://%s:%s@localhost/%s?unix_socket=%s&charset=%s' % 
-    (config.MYSQL_USER, config.MYSQL_PASS, config.MYSQL_DB, config.MYSQL_SOCK, 'utf8'), 
+    (Config.get('MYSQL_USER'), 
+     Config.get('MYSQL_PASS'), 
+     Config.get('MYSQL_DB'), 
+     Config.get('MYSQL_SOCK'), 'utf8'), 
                              convert_unicode=True)
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,

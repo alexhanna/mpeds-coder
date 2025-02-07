@@ -1,5 +1,5 @@
-from database import db_session
-from models import User, ArticleMetadata, CodeFirstPass, CodeSecondPass, CodeEventCreator, ArticleQueue, SecondPassQueue, EventCreatorQueue, Event
+from .database import db_session
+from .models import User, ArticleMetadata, CodeFirstPass, CodeSecondPass, CodeEventCreator, ArticleQueue, SecondPassQueue, EventCreatorQueue, Event
 from sqlalchemy import func, or_, distinct, desc
 from datetime import datetime
 from itertools import combinations

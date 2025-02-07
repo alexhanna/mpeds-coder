@@ -2,7 +2,7 @@ from sqlalchemy import Column, Date, DateTime, Integer, String, Unicode, Foreign
 from sqlalchemy.orm import relationship, backref
 from flask_login import UserMixin
 from sqlalchemy.sql.expression import desc
-from database import Base
+from .database import Base
 import datetime as dt
 from pytz import timezone
 

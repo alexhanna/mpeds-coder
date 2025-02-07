@@ -21,12 +21,7 @@ from random import choice
 import yaml
 from collections import OrderedDict
 
-import pprint
-
-if (sys.version_info < (3, 0)):
-    import urllib2
-else:
-    import urllib.request
+import urllib.request
 
 ## pandas
 import pandas as pd
@@ -45,15 +40,15 @@ from flask_login import LoginManager, login_user, logout_user, current_user, log
 import jinja2
 
 ## article assignment library
-import assign_lib
+from .assign_lib import *
 
 ## db
 from sqlalchemy import func, desc, distinct, and_, or_
 
 ## app-specific
-from database import db_session
+from .database import db_session
 
-from models import ArticleMetadata, ArticleQueue, CanonicalEvent, CanonicalEventLink, CanonicalEventRelationship, \
+from .models import ArticleMetadata, ArticleQueue, CanonicalEvent, CanonicalEventLink, CanonicalEventRelationship, \
     CoderArticleAnnotation, CodeFirstPass, CodeSecondPass, CodeEventCreator, \
     Event, EventCreatorQueue, EventFlag, EventMetadata, \
     RecentEvent, RecentCanonicalEvent, SecondPassQueue, User
@@ -112,7 +107,8 @@ event_creator_vars = []
 
 ## if there's the yaml text selects
 if os.path.isfile(app.config['WD'] + '/text-selects.yaml'):
-    ecs = yaml.load(open(app.config['WD'] + '/text-selects.yaml', 'r'))
+    ecs = yaml.load(open(app.config['WD'] + '/text-selects.yaml', 'r'), 
+                    Loader = yaml.Loader)
     event_creator_vars = [(x, ecs[x]) for x in sorted(ecs.keys())]
 elif os.path.isfile(app.config['WD'] + '/text-selects.csv'):
     for var in open(app.config['WD'] + '/text-selects.csv', 'r').read().split('\n'):
@@ -133,7 +129,8 @@ if os.path.isfile(app.config['WD'] + '/adj-grid-order.yaml'):
         adj_grid_order.append( (k,v) )
 
 ## load preset variables
-preset_vars = yaml.load(open(app.config['WD'] + '/presets.yaml', 'r'))
+preset_vars = yaml.load(open(app.config['WD'] + '/presets.yaml', 'r'), 
+                        Loader = yaml.Loader)
 v1 = [(x, str.title(x).replace('-', ' ')) for x in sorted(preset_vars.keys())]
 
 ## load ordered present variables
